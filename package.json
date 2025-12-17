@@ -1,19 +1,17 @@
 {
   "name": "rssa-study-template",
-  "private": true,
-  "version": "0.0.0",
+  "version": "0.0.9",
   "type": "module",
   "files": [
     "dist"
   ],
-  "main": "./dist/rssa-study-template.umd.js",
+  "main": "./dist/rssa-study-template.es.js",
   "module": "./dist/rssa-study-template.es.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/rssa-study-template.es.js",
-      "require": "./dist/rssa-study-template.umd.js"
+      "import": "./dist/rssa-study-template.es.js"
     }
   },
   "scripts": {
@@ -21,7 +19,6 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "prepublishOnly": "npm run build",
     "prepare": "npm run build"
   },
   "dependencies": {
@@ -63,6 +60,7 @@
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.45.0",
     "vite": "^7.0.4",
+    "vite-plugin-css-injected-by-js": "^3.5.2",
     "vite-plugin-dts": "^4.5.4"
   }
 }
