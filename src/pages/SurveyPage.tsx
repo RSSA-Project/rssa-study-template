@@ -28,8 +28,6 @@ const SurveyPage: React.FC = () => {
 
     const {
         data: surveyPageWrapper,
-        isLoading,
-        error,
     } = useQuery({
         queryKey: ['surveyPage', currentPageId],
         queryFn: () => studyApi.get<NavigationWrapper<SurveyPageType>>(`pages/${currentPageId}`),

@@ -23,7 +23,7 @@ const RouteWrapper: React.FC<RouteWrapperProps> = ({ componentMap, WelcomePage }
 	if (!studyId) {
 		throw new Error("VITE_STUDY_ID is missing. Please ensure it is set in your environment file.");
 	}
-	const { data: config, isLoading, error } = useStudyConfig(studyId!);
+	const { data: config, isLoading } = useStudyConfig(studyId!);
 	const [currentStepData, setCurrentStepData] = useState<StudyStep>();
 	const loadStepData = useCallback(
 		async (stepPath: string, configData: typeof config) => {
