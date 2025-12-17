@@ -2,7 +2,6 @@ export { default as RouteWrapper } from './routes/RouteWrapper';
 export { default as StudyLayout } from './layouts/StudyLayout';
 export { useStudyConfig } from './hooks/useStudyConfig';
 export { default as LoadingScreen } from './components/loadingscreen/LoadingScreen';
-// export { default as WarningDialog } from './components/warningDialog';
 export { default as ErrorBoundary } from './components/ErrorBoundary';
 export * from './types/rssa.types.ts';
 export * from './types/study.types.ts';

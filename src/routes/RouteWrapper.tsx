@@ -25,7 +25,6 @@ const RouteWrapper: React.FC<RouteWrapperProps> = ({ componentMap, WelcomePage }
 	}
 	const { data: config, isLoading, error } = useStudyConfig(studyId!);
 	const [currentStepData, setCurrentStepData] = useState<StudyStep>();
-	console.log("RouteWrapper Debug:", { studyId, config, isLoading, error });
 	const loadStepData = useCallback(
 		async (stepPath: string, configData: typeof config) => {
 			if (!configData) return;
@@ -35,10 +34,8 @@ const RouteWrapper: React.FC<RouteWrapperProps> = ({ componentMap, WelcomePage }
 			if (stepFromConfig && stepFromConfig.step_id !== currentStepData?.id) {
 				try {
 					const response = await studyApi.get<any>(`steps/${stepFromConfig.step_id}`);
-					// response is NavigationWrapper { data: StudyStep, next_id: ..., next_path: ... }
 					const stepData = response.data || response;
 
-					// Map next_path to next for StudyLayout compatibility
 					if (response.next_path) {
 						stepData.next = response.next_path;
 					}
@@ -54,7 +51,6 @@ const RouteWrapper: React.FC<RouteWrapperProps> = ({ componentMap, WelcomePage }
 
 	useEffect(() => {
 		if (location.pathname === "/welcome" && config) {
-			console.log("Resetting study data and cache upon landing on welcome page.");
 			queryClient.clear();
 		}
 		if (config && config.steps) {
@@ -67,12 +63,6 @@ const RouteWrapper: React.FC<RouteWrapperProps> = ({ componentMap, WelcomePage }
 
 		try {
 			const response = await studyApi.get<any>(`studies/${config.study_id}/steps/first`);
-			console.log("handleStartStudy: response", response);
-			// API returns NavigationWrapper { data: StudyStep, next_id: ..., next_path: ... }
-			// But StudyStep in frontend might match the data part or the whole thing?
-			// Based on python: validated_step = StudyStepRead.model_validate(study_step['current'])
-			// study_step_dict = NavigationWrapper(data=validated_step, ...)
-
 			const firstStep = response.data || response;
 
 			if (firstStep) {
@@ -80,7 +70,6 @@ const RouteWrapper: React.FC<RouteWrapperProps> = ({ componentMap, WelcomePage }
 					firstStep.next = response.next_path;
 				}
 				setCurrentStepData(firstStep);
-				console.log("Navigating to:", firstStep.path);
 				navigate(firstStep.path);
 			}
 		} catch (error) {
@@ -91,7 +80,6 @@ const RouteWrapper: React.FC<RouteWrapperProps> = ({ componentMap, WelcomePage }
 		if (!config?.steps) return null;
 
 		return config.steps.map(({ step_id, path, component_type }) => {
-			console.log(`Generating route: path=${path}, component_type=${component_type}`);
 			const Component = componentMap[component_type];
 			if (!Component) console.warn(`No component found for type: ${component_type}`);
 			return Component ? <Route key={step_id} path={path} element={<Component />} /> : null;
