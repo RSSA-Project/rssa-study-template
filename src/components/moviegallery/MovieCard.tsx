@@ -44,7 +44,6 @@ const MovieCard = ({
         mutationKey: ['movieRatings'],
         mutationFn: async (newRating: number): Promise<MutationResult> => {
             if (initialRating && initialRating.id) {
-                // PATCH: The API expects the full object structure for updates as well since fields are required
                 const patchPayload: ParticipantRatingPayload = {
                     study_step_id: studyStep.id,
                     study_step_page_id: null,
@@ -133,7 +132,7 @@ const MovieCard = ({
             <div className="relative lg:h-54 xxl:h-81 flex items-center justify-center bg-black">
                 <img
                     className={clsx('h-full w-full', isHovered ? 'object-contain' : 'object-contain')}
-                    src={movie.poster}
+                    src={movie.tmdb_poster}
                     alt={`Poster for ${movie.title}`}
                     onError={(e) => {
                         e.currentTarget.src = 'https://placehold.co/400x600/000000/FFFFFF?text=No+Image';
