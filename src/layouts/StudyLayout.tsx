@@ -23,9 +23,7 @@ const StudyLayoutContent: React.FC<StudyLayoutProps> = ({ stepApiData }) => {
 	const { setButtonControl, buttonControl } = useNextButtonControl();
 
 	const handleNextButtonClick = useCallback(() => {
-		console.log("handleNextButtonClick: stepApiData", stepApiData);
 		if (!stepApiData) return;
-		console.log("handleNextButtonClick: navigating to", stepApiData.next);
 		navigate(stepApiData.next!);
 		setIsStepComplete(false);
 	}, [stepApiData, navigate, setIsStepComplete]);

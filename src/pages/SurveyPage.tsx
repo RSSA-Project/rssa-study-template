@@ -43,14 +43,6 @@ const SurveyPage: React.FC = () => {
         }
     });
 
-    console.log('SurveyPage Debug:', {
-        studyStep,
-        currentPageId,
-        surveyPageWrapper,
-        isLoading,
-        error
-    });
-
     useEffect(() => {
         if (!surveyPageWrapper) return;
 
@@ -74,7 +66,6 @@ const SurveyPage: React.FC = () => {
     if (!surveyPageWrapper) {
         return <LoadingScreen loading={true} message="Loading survey page..." />;
     }
-    console.log('SurveyPage', surveyPageWrapper, isPageComplete);
     return (
         <div className="flex justify-content-evenly">
             <div className="">
