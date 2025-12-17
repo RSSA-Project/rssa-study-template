@@ -19,3 +19,4 @@ export { default as WelcomePage } from './pages/WelcomePage';
 export { default as ConsentPage } from './pages/ConsentPage';
 export { default as MovieRatingPage } from './pages/MovieRatingPage';
 export { default as DemographicsPage } from './pages/DemographicsPage';
+export { default as FeedbackPage } from './pages/FeedbackPage';

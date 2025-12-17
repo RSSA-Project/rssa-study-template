@@ -114,7 +114,7 @@ const RouteWrapper: React.FC<RouteWrapperProps> = ({ componentMap, WelcomePage }
 					/>
 				)}
 				<Route path="/" element={<Navigate to="/welcome" replace />} />
-				<Route path="/" element={<StudyLayout stepApiData={currentStepData} />}>
+				<Route element={<StudyLayout stepApiData={currentStepData} />}>
 					{dynamicRoutes}
 				</Route>
 			</Routes>

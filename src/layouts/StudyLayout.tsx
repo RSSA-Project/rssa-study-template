@@ -1,6 +1,6 @@
 import { Button } from "@headlessui/react";
-import clsx from "clsx";
-import { Fragment, useCallback, useEffect } from "react";
+import { clsx } from "clsx";
+import { useCallback, useEffect } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import LoadingScreen from "../components/loadingscreen/LoadingScreen";
 import { NextButtonControlProvider } from "../contexts/NextButtonControlProvider";
@@ -63,26 +63,21 @@ const StudyLayoutContent: React.FC<StudyLayoutProps> = ({ stepApiData }) => {
 					"Step is missing description or instructions."
 				}
 			/>
-			<div className="mx-auto max-w-screen-xl px-2 text-end rounded-md">
+			<div className="mx-auto max-w-screen-xl px-2 text-end rounded-md mb-24">
 				<Outlet context={outletContextValue} />
-				<nav className="p-4 bg-gray-200">
-					<Button as={Fragment} disabled={buttonControl.isDisabled}>
-						{({ hover, active, disabled }) => (
-							<button
-								onClick={buttonControl.action}
-								disabled={disabled}
-								className={clsx(
-									"px-6 py-3 rounded-lg",
-									"font-medium",
-									disabled
-										? "bg-orange-300 cursor-not-allowed text-gray-400"
-										: "bg-amber-500 cursor-pointer text-white",
-									(hover || active) && "bg-amber-600 text-white"
-								)}
-							>
-								{buttonControl.label}
-							</button>
+				<nav className="p-4 bg-gray-200 flex justify-end">
+					<Button
+						as="button"
+						onClick={buttonControl.action}
+						disabled={buttonControl.isDisabled}
+						className={clsx(
+							"px-6 py-3 rounded-lg font-medium transition-colors duration-200",
+							buttonControl.isDisabled
+								? "bg-orange-300 cursor-not-allowed text-gray-400"
+								: "bg-amber-500 hover:bg-amber-600 text-white cursor-pointer shadow-sm"
 						)}
+					>
+						{buttonControl.label}
 					</Button>
 				</nav>
 			</div>

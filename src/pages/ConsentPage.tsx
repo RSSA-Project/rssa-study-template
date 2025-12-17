@@ -104,25 +104,33 @@ const ConsentPage: React.FC<ConsentPageProps> = ({
                 </p>
             </div>
 
-            <div className="flex items-center gap-x-3 ms-4 p-3 rounded-lg mt-3 bg-gray-50">
+            <div className="flex items-center ms-4 p-3 rounded-lg mt-3 bg-gray-50">
                 <Checkbox
                     checked={agreed}
                     onChange={setAgreed}
                     className={clsx(
-                        'group h-6 w-6 rounded-md p-1',
-                        'ring-1 ring-inset ring-gray-300',
-                        'data-[checked]:bg-amber-500 data-[checked]:ring-amber-300',
-                        'cursor-pointer',
-                        'focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-300'
+                        'group flex h-6 w-6 items-center justify-center rounded-md p-1 border cursor-pointer',
+                        'transition-colors duration-200 ease-in-out',
+                        'focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-300',
+                        agreed
+                            ? 'bg-amber-500 border-amber-500'
+                            : 'bg-white border-gray-300 hover:border-amber-400'
                     )}
                     disabled={isStepComplete}
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="hidden h-4 w-4 fill-white group-data-[checked]:block">
-                        <path fillRule="evenodd" d="M19.916 4.626a.75.75 0 0 1 .207 1.05l-9 13.5a.75.75 0 0 1-1.154.114l-6-6a.75.75 0 0 1 1.06-1.06l5.353 5.353 8.493-12.74a.75.75 0 0 1 1.04-.207Z" clipRule="evenodd" />
-                    </svg>
+                    {agreed && (
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                            className="h-4 w-4 text-white"
+                        >
+                            <path fillRule="evenodd" d="M19.916 4.626a.75.75 0 0 1 .207 1.05l-9 13.5a.75.75 0 0 1-1.154.114l-6-6a.75.75 0 0 1 1.06-1.06l5.353 5.353 8.493-12.74a.75.75 0 0 1 1.04-.207Z" clipRule="evenodd" />
+                        </svg>
+                    )}
                 </Checkbox>
                 <label
-                    className="text-gray-700 select-none cursor-pointer"
+                    className="text-gray-700 select-none cursor-pointer ms-3"
                     onClick={() => !isStepComplete && setAgreed(!agreed)}
                 >
                     I have read and understood this consent form and I agree to participate in this research study
@@ -157,7 +165,7 @@ const ConsentPage: React.FC<ConsentPageProps> = ({
                     <p>Thank you for agreeing to participate in the study.</p>
                     <div
                         className={clsx(
-                            'p-4 mx-auto mt-3 mb-3 w-45 h-30 bg-gray-200 rounded-md',
+                            'p-4 mx-auto mt-3 mb-3 w-[45rem] h-[13.5rem] bg-gray-200 rounded-md',
                             'text-3xl text-center content-center text-amber-900'
                         )}
                     >
