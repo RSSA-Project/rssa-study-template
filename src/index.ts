@@ -20,3 +20,4 @@ export { default as MovieRatingPage } from './pages/MovieRatingPage';
 export { default as DemographicsPage } from './pages/DemographicsPage';
 export { default as FeedbackPage } from './pages/FeedbackPage';
 export { default as LoadingText } from './components/LoadingText';
+export { default as FinalPage } from './pages/FinalPage';
