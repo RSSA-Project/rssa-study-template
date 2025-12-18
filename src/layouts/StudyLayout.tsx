@@ -61,7 +61,7 @@ const StudyLayoutContent: React.FC<StudyLayoutProps> = ({ stepApiData }) => {
 					"Step is missing description or instructions."
 				}
 			/>
-			<div className="mx-auto max-w-screen-xl px-2 text-end rounded-md mb-24">
+			<div className="mx-auto max-w-screen-xl px-2 rounded-md mb-24">
 				<Outlet context={outletContextValue} />
 				<nav className="p-4 bg-gray-200 flex justify-end">
 					<Button

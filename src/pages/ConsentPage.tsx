@@ -73,9 +73,6 @@ const ConsentPage: React.FC<ConsentPageProps> = ({
 
     const consentButtonDisabled = !agreed || consentMutation.isPending || isStepComplete;
 
-    // Fallback for cases where StudyLayoutContext might not be used or studyStep is not available yet logic? 
-    // Assuming context is present as it's a template for the study.
-
     return (
         <div className="container mx-auto p-4">
             <div className="bg-white shadow-md rounded-lg p-6 text-left">
