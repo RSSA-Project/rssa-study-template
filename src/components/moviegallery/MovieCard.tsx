@@ -30,48 +30,47 @@ const MovieCard = ({
 	onClick: () => void;
 }) => {
 	const { studyStep } = useOutletContext<StudyLayoutContextType>();
-	const initialRating = userRating;
-	const [currRating, setCurrRating] = useState<RatedItem>();
-	const [prevRating, setPrevRating] = useState<RatedItem>();
-	// const [movieRating, setMovieRating] = useState<number>(0);
-	// const [prevRating, setPrevRating] = useState<number>(0);
+	const [currentRatedItem, setCurrentRatedItem] = useState<RatedItem | undefined>(userRating);
+	const [movieRating, setMovieRating] = useState<number>(0);
+	const [prevRating, setPrevRating] = useState<number>(0);
 	const [isHovered, setIsHovered] = useState<boolean>(false);
 	const { studyApi } = useStudy();
 
 	useEffect(() => {
-		if (initialRating) {
-			// setMovieRating(initialRating.rating);
-			setCurrRating(initialRating);
-			// setPrevRating(initialRating.rating);
-			setPrevRating(initialRating);
+		// Sync local state when prop changes (e.g. initial load or parent update)
+		if (userRating) {
+			setCurrentRatedItem(userRating);
+			setMovieRating(userRating.rating);
+			setPrevRating(userRating.rating);
 		}
-	}, [initialRating]);
+	}, [userRating]);
 
 	const queryClient = useQueryClient();
 	const ratingMutation = useMutation({
 		mutationKey: ["movieRatings"],
 		mutationFn: async (newRating: number): Promise<MutationResult> => {
-			if (initialRating && initialRating.id) {
-				const patchPayload: ParticipantRatingPayload = {
-					study_step_id: studyStep.id,
-					study_step_page_id: null,
-					context_tag: "preference_elicitation",
+			if (currentRatedItem && currentRatedItem.id) {
+				// PATCH: Update existing rating
+				// The backend schema ParticipantRatingUpdate only accepts id, version, and rated_item.
+				const patchPayload = {
+					id: currentRatedItem.id,
+					version: currentRatedItem.version,
 					rated_item: {
-						item_id: initialRating.item_id,
+						item_id: currentRatedItem.item_id,
 						rating: newRating,
 					},
 				};
 
-				await studyApi.patch<ParticipantRatingPayload, void>(
-					`responses/ratings/${initialRating.id}`,
+				await studyApi.patch<typeof patchPayload, void>(
+					`responses/ratings/${currentRatedItem.id}`,
 					patchPayload
 				);
 				return {
 					type: "PATCH",
-					id: initialRating.id,
-					item_id: initialRating.item_id,
+					id: currentRatedItem.id,
+					item_id: currentRatedItem.item_id,
 					rating: newRating,
-					version: (initialRating.version || 0) + 1,
+					version: (currentRatedItem.version || 0) + 1,
 				};
 			} else {
 				// POST: Create new rating
@@ -99,35 +98,35 @@ const MovieCard = ({
 			}
 		},
 		onSuccess: (result) => {
-			const newRating: RatedItem = {
+			const newRatingItem: RatedItem = {
 				id: result.id,
 				item_id: result.item_id,
 				rating: result.rating,
 				version: result.version,
 			};
+			// Update local state so next time we know it's an existing item
+			setCurrentRatedItem(newRatingItem);
+
 			queryClient.setQueryData<RatedItem[]>(["movieRatings"], (oldRatings: RatedItem[] | undefined) => {
 				const existingRatings = oldRatings || [];
 				const index = existingRatings.findIndex((rat) => rat.item_id === result.item_id);
 				if (index > -1) {
-					return existingRatings.map((rat, i) => (i === index ? newRating : rat));
+					return existingRatings.map((rat, i) => (i === index ? newRatingItem : rat));
 				} else {
-					return [...existingRatings, newRating];
+					return [...existingRatings, newRatingItem];
 				}
 			});
-			setCurrRating(newRating);
 		},
 		onError: () => {
 			console.error("Failed to save rating on the server.");
-			// setMovieRating(prevRating);
-			setCurrRating(prevRating);
+			setMovieRating(prevRating);
 		},
 	});
 
 	const handleRating = (newRating: number) => {
-		if (ratingMutation.isPending || newRating === currRating?.rating) return;
-		// setPrevRating(movieRating);
-		setPrevRating(currRating);
-		// setMovieRating(newRating);
+		if (ratingMutation.isPending || newRating === movieRating) return;
+		setPrevRating(movieRating);
+		setMovieRating(newRating);
 		ratingMutation.mutateAsync(newRating);
 	};
 
@@ -160,7 +159,7 @@ const MovieCard = ({
 				</div>
 			</div>
 			<div className="bg-gray-700 py-1">
-				<StarRating initialRating={currRating?.rating || 0} onRatingChange={handleRating} maxStars={5} />
+				<StarRating initialRating={movieRating} onRatingChange={handleRating} maxStars={5} />
 			</div>
 		</div>
 	);
