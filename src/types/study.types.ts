@@ -1,6 +1,6 @@
-import type { StudyStep } from './rssa.types';
+import type { StudyStep } from "./rssa.types";
 
 export type StudyLayoutContextType = {
-    studyStep: StudyStep;
-    resetNextButton: () => void;
+  studyStep: StudyStep;
+  resetNextButton: () => void;
 };
