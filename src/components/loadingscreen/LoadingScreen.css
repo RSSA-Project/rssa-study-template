@@ -1,17 +1,16 @@
 .ls-container {
-	/* position: absolute; */
-	width: 100%;
-	height: 100%;
-	z-index: 999;
-	background-color: rgba(255, 255, 255, 1);
-	margin: 18px auto auto auto;
+  /* position: absolute; */
+  width: 100%;
+  height: 100%;
+  z-index: 999;
+  background-color: rgba(255, 255, 255, 1);
+  margin: 18px auto auto auto;
 }
 
 .ls-container h2 {
-	margin: 300px auto 3px auto;
-	color: black;
+  margin: 300px auto 3px auto;
+  color: black;
 }
-
 
 /**
  * ==============================================
@@ -19,102 +18,102 @@
  * ==============================================
  */
 .dot-floating {
-	position: relative;
-	width: 10px;
-	height: 10px;
-	margin: 1.5em auto;
-	border-radius: 5px;
-	background-color: #9880ff;
-	color: #9880ff;
-	animation: dot-floating 3s infinite cubic-bezier(0.15, 0.6, 0.9, 0.1);
+  position: relative;
+  width: 10px;
+  height: 10px;
+  margin: 1.5em auto;
+  border-radius: 5px;
+  background-color: #9880ff;
+  color: #9880ff;
+  animation: dot-floating 3s infinite cubic-bezier(0.15, 0.6, 0.9, 0.1);
 }
 
 .dot-floating::before,
 .dot-floating::after {
-	content: "";
-	display: inline-block;
-	position: absolute;
-	top: 0;
+  content: "";
+  display: inline-block;
+  position: absolute;
+  top: 0;
 }
 
 .dot-floating::before {
-	left: -12px;
-	width: 10px;
-	height: 10px;
-	border-radius: 5px;
-	/* background-color: #9880ff; */
-	background-color: #f9b05c;
-	/* color: #9880ff; */
-	color: #f9b05c;
-	animation: dot-floating-before 3s infinite ease-in-out;
+  left: -12px;
+  width: 10px;
+  height: 10px;
+  border-radius: 5px;
+  /* background-color: #9880ff; */
+  background-color: #f9b05c;
+  /* color: #9880ff; */
+  color: #f9b05c;
+  animation: dot-floating-before 3s infinite ease-in-out;
 }
 
 .dot-floating::after {
-	left: -24px;
-	width: 10px;
-	height: 10px;
-	border-radius: 5px;
-	background-color: #9880ff;
-	color: #9880ff;
-	animation: dot-floating-after 3s infinite cubic-bezier(0.4, 0, 1, 1);
+  left: -24px;
+  width: 10px;
+  height: 10px;
+  border-radius: 5px;
+  background-color: #9880ff;
+  color: #9880ff;
+  animation: dot-floating-after 3s infinite cubic-bezier(0.4, 0, 1, 1);
 }
 
 @keyframes dot-floating {
-	0% {
-		left: calc(-50% - 5px);
-	}
+  0% {
+    left: calc(-50% - 5px);
+  }
 
-	75% {
-		left: calc(50% + 105px);
-	}
+  75% {
+    left: calc(50% + 105px);
+  }
 
-	100% {
-		left: calc(50% + 105px);
-	}
+  100% {
+    left: calc(50% + 105px);
+  }
 }
 
 @keyframes dot-floating-before {
-	0% {
-		left: -50px;
-	}
+  0% {
+    left: -50px;
+  }
 
-	50% {
-		left: -12px;
-	}
+  50% {
+    left: -12px;
+  }
 
-	75% {
-		left: -50px;
-	}
+  75% {
+    left: -50px;
+  }
 
-	100% {
-		left: -50px;
-	}
+  100% {
+    left: -50px;
+  }
 }
 
 @keyframes dot-floating-after {
-	0% {
-		left: -100px;
-	}
+  0% {
+    left: -100px;
+  }
 
-	50% {
-		left: -24px;
-	}
+  50% {
+    left: -24px;
+  }
 
-	75% {
-		left: -100px;
-	}
+  75% {
+    left: -100px;
+  }
 
-	100% {
-		left: -100px;
-	}
+  100% {
+    left: -100px;
+  }
 }
 
 .loaderStage {
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	position: relative;
-	padding: 32px 0;
-	margin: 0 5%;
-	overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  padding: 32px 0;
+  margin: 0 5%;
+  overflow: hidden;
 }
