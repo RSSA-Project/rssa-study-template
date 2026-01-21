@@ -38,7 +38,7 @@ const RouteWrapper: React.FC<RouteWrapperProps> = ({
   const location = useLocation();
   const navigate = useNavigate();
   const { studyApi } = useStudy();
-  const { jwt } = useParticipant(); // Access JWT to react to authentication changes
+  const { jwt, setJwt } = useParticipant(); // Access JWT to react to authentication changes
   const queryClient = useQueryClient();
   const isRestoring = useIsRestoring();
 
@@ -205,6 +205,37 @@ const RouteWrapper: React.FC<RouteWrapperProps> = ({
       isTestMode: isTestModeConfirmed,
     };
   }, [loadedParticipant, participantParams, isTestModeConfirmed]);
+
+  // Clear Cache and Session on Base URL or new PID entry
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const hasPidParam = Array.from(searchParams.keys()).some((key) =>
+      key.endsWith("_pid"),
+    );
+    const isBaseUrl =
+      location.pathname === "/" || location.pathname === "/welcome";
+
+    if (isBaseUrl || hasPidParam) {
+      // console.log("Resetting session due to base URL or PID param entry.");
+      setJwt(null);
+      const studyId = import.meta.env.VITE_RSSA_STUDY_ID;
+      if (studyId) {
+        // Iterate and remove all keys starting with studyId
+        const prefix = `${studyId}_`;
+        Object.keys(localStorage).forEach((key) => {
+          if (key.startsWith(prefix)) {
+            localStorage.removeItem(key);
+          }
+        });
+      } else {
+        // Fallback or warning
+        console.warn(
+          "VITE_RSSA_STUDY_ID is not defined, cannot clear scoped local storage.",
+        );
+      }
+      queryClient.clear();
+    }
+  }, []); // Run once on mount
 
   if (showExitPage) {
     return <StudyExitPage />;

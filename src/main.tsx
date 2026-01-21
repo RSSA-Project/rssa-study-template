@@ -47,6 +47,7 @@ const queryClient = new QueryClient({
 });
 
 const localStoragePersister = createAsyncStoragePersister({
+  key: `${RSSA_STUDY_ID}_REACT_QUERY_OFFLINE_CACHE`,
   storage: {
     getItem: (key) => Promise.resolve(localStorage.getItem(key)),
     setItem: (key, value) => Promise.resolve(localStorage.setItem(key, value)),
@@ -66,7 +67,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       client={queryClient}
       persistOptions={{ persister: localStoragePersister }}
     >
-      <ParticipantProvider>
+      <ParticipantProvider storageKeyPrefix={RSSA_STUDY_ID}>
         <StudyProvider config={providerConfig}>
           <ErrorBoundary>
             <App />
