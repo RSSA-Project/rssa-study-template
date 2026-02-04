@@ -1,73 +1,49 @@
-# React + TypeScript + Vite
+# RSSA Study Template (@rssa-project/study-template)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+[![npm version](https://img.shields.io/npm/v/@rssa-project/study-template.svg)](https://www.npmjs.com/package/@rssa-project/study-template)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Currently, two official plugins are available:
+A React component library providing standard layouts, pages, and hooks for building research studies on the RSSA Platform. It creates a consistent UI and logic flow (consent -> survey -> stimuli -> feedback) across different RSSA studies.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Installation
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(["dist"]),
-  {
-    files: ["**/*.{ts,tsx}"],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ["./tsconfig.node.json", "./tsconfig.app.json"],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
+```bash
+npm install @rssa-project/study-template
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Quick Start
 
-```js
-// eslint.config.js
-import reactX from "eslint-plugin-react-x";
-import reactDom from "eslint-plugin-react-dom";
+Wrap your main router with the `RouteWrapper`, ensuring you pass a component map mapping step types to your page components.
 
-export default defineConfig([
-  globalIgnores(["dist"]),
-  {
-    files: ["**/*.{ts,tsx}"],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs["recommended-typescript"],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ["./tsconfig.node.json", "./tsconfig.app.json"],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
+```tsx
+import { RouteWrapper, WelcomePage, SurveyPage, FinalPage } from '@rssa-project/study-template';
+import UserCustomPage from './UserCustomPage';
+
+// Map 'step_type' from your study config to React components
+const componentMap = {
+	welcome: WelcomePage,
+	survey: SurveyPage,
+	custom_task: UserCustomPage,
+	completion: FinalPage,
+};
+
+function App() {
+	return (
+		<Router>
+			{/* RouteWrapper handles navigation logic based on study state */}
+			<RouteWrapper componentMap={componentMap} WelcomePage={WelcomePage} />
+		</Router>
+	);
+}
 ```
+
+## Core Features
+
+- **Standard Pages**: `ConsentPage`, `SurveyPage`, `MovieRatingPage`, `DemographicsPage`.
+- **Hooks**: `useNextButtonControl`, `useStepCompletion`.
+- **Contexts**: Handles participant state and navigation flow automatically.
+
+## Requirements
+
+- React 18+
+- `@rssa-project/api` (Peer Dependency)
