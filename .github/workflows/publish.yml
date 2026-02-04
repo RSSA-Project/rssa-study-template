@@ -1,27 +1,27 @@
 name: Publish to NPM
 on:
-  push:
-    tags:
-      - "v*"
+    push:
+        tags:
+            - 'v*'
 
 permissions:
-  id-token: write
-  contents: read
+    id-token: write
+    contents: read
 
 jobs:
-  publish:
-    runs-on: ubuntu-latest
-    environment: production
-    steps:
-      - uses: actions/checkout@v4
+    publish:
+        runs-on: ubuntu-latest
+        environment: production
+        steps:
+            - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "24"
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: '24'
 
-      - run: echo "registry=https://registry.npmjs.org/" > .npmrc
+            - run: echo "registry=https://registry.npmjs.org/" > .npmrc
 
-      - run: npm ci
-      - run: npm run build
+            - run: npm ci
+            - run: npm run build
 
-      - run: npm publish --provenance
+            - run: npm publish --provenance
