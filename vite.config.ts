@@ -13,6 +13,7 @@ export default defineConfig({
 		cssInjectedByJsPlugin(),
 		dts({
 			tsconfigPath: './tsconfig.app.json',
+			rollupTypes: true,
 			insertTypesEntry: true,
 			exclude: ['**/*.test.ts', '**/*.test.tsx', 'src/setupTests.ts'],
 		}),
