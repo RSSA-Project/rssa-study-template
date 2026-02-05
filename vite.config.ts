@@ -27,19 +27,11 @@ export default defineConfig({
 		},
 		rollupOptions: {
 			// Externalize deps that shouldn't be bundled
-			external: [
-				'react',
-				'react-dom',
-				'react/jsx-runtime',
-				'react-router-dom',
-				'@tanstack/react-query',
-				'@rssa-project/api',
-			],
+			external: ['react', 'react-dom', 'react-router-dom', '@tanstack/react-query', '@rssa-project/api'],
 			output: {
 				globals: {
 					react: 'React',
 					'react-dom': 'ReactDOM',
-					'react/jsx-runtime': 'ReactJsxRuntime',
 					'@rssa-project/api': 'RssaApi',
 					'react-router-dom': 'ReactRouterDOM',
 					'@tanstack/react-query': 'ReactQuery',
