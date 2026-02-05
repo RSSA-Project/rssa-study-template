@@ -20,12 +20,9 @@
 	"exports": {
 		".": {
 			"types": "./dist/index.d.ts",
-			"style": "./dist/rssa-study-template.css",
 			"import": "./dist/rssa-study-template.es.js"
-		},
-		"./style.css": "./dist/rssa-study-template.css"
+		}
 	},
-	"style": "./dist/rssa-study-template.css",
 	"scripts": {
 		"dev": "vite",
 		"build": "tsc -b && vite build",
@@ -78,6 +75,7 @@
 		"typescript-eslint": "^8.45.0",
 		"vite": "^7.0.4",
 		"vite-plugin-dts": "^4.5.4",
+		"vite-plugin-lib-inject-css": "^2.2.2",
 		"vitest": "^4.0.16"
 	},
 	"lint-staged": {

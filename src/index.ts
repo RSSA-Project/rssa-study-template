@@ -1,3 +1,4 @@
+import './index.css';
 export { default as RouteWrapper } from './routes/RouteWrapper';
 export { default as StudyLayout } from './layouts/StudyLayout';
 export { default as LoadingScreen } from './components/loadingscreen/LoadingScreen';

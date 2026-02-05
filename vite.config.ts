@@ -3,12 +3,14 @@ import react from '@vitejs/plugin-react-swc';
 import { resolve } from 'path';
 import { defineConfig } from 'vite';
 import dts from 'vite-plugin-dts';
+import { libInjectCss } from 'vite-plugin-lib-inject-css';
 
 // https://vite.dev/config/
 export default defineConfig({
 	plugins: [
 		react(),
 		tailwindcss(),
+		libInjectCss(),
 		dts({
 			tsconfigPath: './tsconfig.app.json',
 			rollupTypes: true,
@@ -24,7 +26,7 @@ export default defineConfig({
 			formats: ['es'],
 		},
 		rollupOptions: {
-			// Make sure to externalize deps that shouldn't be bundled
+			// Externalize deps that shouldn't be bundled
 			external: ['react', 'react-dom', 'react-router-dom', '@tanstack/react-query', '@rssa-project/api'],
 			output: {
 				globals: {
