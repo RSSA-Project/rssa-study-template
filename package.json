@@ -20,8 +20,10 @@
 	"exports": {
 		".": {
 			"types": "./dist/index.d.ts",
+			"style": "./dist/style.css",
 			"import": "./dist/rssa-study-template.es.js"
-		}
+		},
+		"./style.css": "./dist/style.css"
 	},
 	"scripts": {
 		"dev": "vite",
