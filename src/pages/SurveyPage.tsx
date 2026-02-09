@@ -1,7 +1,7 @@
+import { useStudy } from '@rssa-project/api';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { useStudy } from '@rssa-project/api';
 import LoadingScreen from '../components/loadingscreen/LoadingScreen';
 import { useNextButtonControl } from '../hooks/useNextButtonControl';
 import { usePageCompletion } from '../hooks/usePageCompletion';
@@ -63,11 +63,8 @@ const SurveyPage: React.FC = () => {
 		return <LoadingScreen loading={true} message="Loading survey page..." />;
 	}
 	return (
-		<div className="flex justify-content-evenly">
-			<div className="">
-				<SurveyTemplate surveyPage={surveyPageWrapper.data} />
-			</div>
-			<div className="content-center"></div>
+		<div className="w-3/4 mx-auto px-3">
+			<SurveyTemplate surveyPage={surveyPageWrapper.data} />
 		</div>
 	);
 };

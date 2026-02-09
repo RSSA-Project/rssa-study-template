@@ -24,17 +24,16 @@ export interface ParticipantTokenObject {
 interface ConsentPageProps {
 	children: React.ReactNode;
 	participantTypeKey?: string;
-	participantTypeId?: string; // create backcompat or deprecate
+	participantTypeId?: string;
 	externalId?: string;
 	onConsentSuccess?: (token: string, resumeCode: string) => void;
 	title?: string;
-	itemTitle?: string; // "Testing an Interactive Movie Recommender..."
+	itemTitle?: string;
 }
 
 const ConsentPage: React.FC<ConsentPageProps> = ({
 	children,
 	participantTypeKey,
-	// participantTypeId, // deprecated but removed from destructuring to avoid unused var error
 	externalId,
 	onConsentSuccess,
 	title = 'Key Information About the Research Study',
@@ -91,14 +90,14 @@ const ConsentPage: React.FC<ConsentPageProps> = ({
 
 				{children}
 
-				<p className="font-bold mt-4">Consent</p>
+				<p className="font-bold mt-4 mb-2">Consent</p>
 				<p className="font-bold mb-2">
 					By participating in the study, you indicate that you have read the information written above, been
 					allowed to ask any questions, and you are voluntarily choosing to take part in this research.
 				</p>
 			</div>
 
-			<div className="flex items-center ms-4 p-3 rounded-lg mt-3 bg-gray-50">
+			<div className="flex items-center p-3 rounded-lg mt-3 bg-gray-50">
 				<Checkbox
 					checked={agreed}
 					onChange={setAgreed}
@@ -179,7 +178,7 @@ const ConsentPage: React.FC<ConsentPageProps> = ({
 					<p>Thank you for agreeing to participate in the study.</p>
 					<div
 						className={clsx(
-							'p-4 mx-auto mt-3 mb-3 w-[45rem] h-[13.5rem] bg-gray-200 rounded-md',
+							'p-3 mx-auto mt-3 mb-3 w-[18rem] h-[9rem] bg-gray-200 rounded-md',
 							'text-3xl text-center content-center text-amber-900'
 						)}
 					>

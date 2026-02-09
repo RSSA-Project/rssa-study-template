@@ -34,7 +34,11 @@ const RatingProgress: React.FC<{ completed: number; total: number }> = ({ comple
 			{/* Progress Bar Container */}
 			<div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-full shadow-inner overflow-hidden">
 				<div
-					className={`h-full rounded-full transition-all duration-700 ease-out ${isComplete ? 'bg-amber-500' : 'bg-amber-300'}`}
+					title="Rating progressbar"
+					className={clsx(
+						'h-full rounded-full transition-all duration-700 ease-out',
+						`${isComplete ? 'bg-amber-500' : 'bg-amber-300'}`
+					)}
 					style={{ width: `${percentage}%` }}
 					aria-valuenow={completed}
 					aria-valuemin={0}
@@ -72,7 +76,7 @@ const MovieRatingPage: React.FC<MovieRatingPageProps> = ({ minRatingCount = 10, 
 			<div className="justify-between p-3 bg-gray-300 rounded-3">
 				<PaginatedResourceViewer<MovieDetails> apiResourceTag="movies" limit={itemsPerPage}>
 					{(movies, _, handleItemClick) => (
-						<div className={clsx('grid sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-6 gap-3')}>
+						<div className={clsx('grid sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-6 xl:grid-cols-6 gap-3')}>
 							{movies.length > 0 ? (
 								movies.map((movie) => {
 									const ratedMovie = ratedMovies?.find(

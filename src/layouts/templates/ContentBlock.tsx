@@ -33,7 +33,7 @@ const ContentBlock: React.FC<ContentBlockProps> = ({ content, onComplete }) => {
 	}, [answeredItemIds.size, content, onComplete]);
 
 	return (
-		<div className="justify-items-center">
+		<div>
 			{content.items.map((item) => {
 				const currentResponses = currentPageResponses?.find(
 					(itemRes: SurveyItemResponse) => itemRes.survey_item_id === item.id
