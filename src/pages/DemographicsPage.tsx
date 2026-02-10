@@ -140,7 +140,7 @@ const DemographicsPage: React.FC = () => {
 	};
 
 	return (
-		<div className="text-left m-5 p-5 text-md font-normal w-180 shadow-sm">
+		<div className="mx-auto w-fit text-left m-5 p-5 text-md font-normal w-180 shadow-sm">
 			<Field className="mt-5 shadow-sm p-3 rounded">
 				<Label className="">What is your age?</Label>
 				<Select
