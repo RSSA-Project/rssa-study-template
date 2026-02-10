@@ -73,7 +73,7 @@ const MovieRatingPage: React.FC<MovieRatingPageProps> = ({ minRatingCount = 10, 
 
 	return (
 		<div className="text-gray-900 my-3">
-			<div className="justify-between p-3 bg-gray-300 rounded-3">
+			<div className="w-fit mx-auto justify-between p-3 bg-gray-300 rounded-3">
 				<PaginatedResourceViewer<MovieDetails> apiResourceTag="movies" limit={itemsPerPage}>
 					{(movies, _, handleItemClick) => (
 						<div className={clsx('grid sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-6 xl:grid-cols-6 gap-3')}>

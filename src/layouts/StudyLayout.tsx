@@ -1,8 +1,7 @@
-import { Button } from '@headlessui/react';
-import { clsx } from 'clsx';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import LoadingScreen from '../components/loadingscreen/LoadingScreen';
+import NextButton from '../components/NextButton';
 import { NextButtonControlProvider } from '../contexts/NextButtonControlProvider';
 import { PageCompletionProvider } from '../contexts/pageCompletionContext';
 import { StepCompletionProvider } from '../contexts/stepCompletionContext';
@@ -19,8 +18,14 @@ interface StudyLayoutProps {
 
 const StudyLayoutContent: React.FC<StudyLayoutProps> = ({ stepApiData }) => {
 	const navigate = useNavigate();
+	const [buttonLoader, setButtonLoader] = useState<boolean>(false);
 	const { isStepComplete, setIsStepComplete } = useStepCompletion();
 	const { setButtonControl, buttonControl } = useNextButtonControl();
+
+	const handleButtonLoaderState = useCallback(
+		(showLoader: boolean) => setButtonLoader(showLoader),
+		[setButtonLoader]
+	);
 
 	const handleNextButtonClick = useCallback(() => {
 		if (!stepApiData) return;
@@ -40,8 +45,9 @@ const StudyLayoutContent: React.FC<StudyLayoutProps> = ({ stepApiData }) => {
 		() => ({
 			studyStep: stepApiData!,
 			resetNextButton: handleNextButtonReset,
+			showButtonLoader: handleButtonLoaderState,
 		}),
-		[stepApiData, handleNextButtonReset]
+		[stepApiData, handleNextButtonReset, handleButtonLoaderState]
 	);
 
 	useEffect(() => {
@@ -67,7 +73,15 @@ const StudyLayoutContent: React.FC<StudyLayoutProps> = ({ stepApiData }) => {
 			<div className="mx-auto px-2 rounded-md mb-24">
 				<Outlet context={outletContextValue} />
 				<nav className="p-4 bg-gray-200 flex justify-end mt-3">
-					<Button
+					<NextButton
+						handleClick={buttonControl.action}
+						disabled={buttonControl.isDisabled}
+						loading={buttonLoader}
+					>
+						{buttonControl.label}
+					</NextButton>
+
+					{/* <Button
 						as="button"
 						onClick={buttonControl.action}
 						disabled={buttonControl.isDisabled}
@@ -77,9 +91,31 @@ const StudyLayoutContent: React.FC<StudyLayoutProps> = ({ stepApiData }) => {
 								? 'bg-orange-300 cursor-not-allowed text-gray-400'
 								: 'bg-amber-500 hover:bg-amber-600 text-white cursor-pointer shadow-sm'
 						)}
-					>
-						{buttonControl.label}
-					</Button>
+					> */}
+					{/* {buttonControl.label} */}
+					{/* <div className="inset-0 opacity-100 z-50 rounded-b-md flex items-center justify-center">
+							<svg
+								className="animate-spin h-6 w-6 text-white"
+								xmlns="http://www.w3.org/2000/svg"
+								fill="none"
+								viewBox="0 0 24 24"
+							>
+								<circle
+									className="opacity-25"
+									cx="12"
+									cy="12"
+									r="10"
+									stroke="currentColor"
+									strokeWidth="4"
+								></circle>
+								<path
+									className="opacity-75"
+									fill="currentColor"
+									d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+								></path>
+							</svg>
+						</div>
+					</Button> */}
 				</nav>
 			</div>
 			<Footer />

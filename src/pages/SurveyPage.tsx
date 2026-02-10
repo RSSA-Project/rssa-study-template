@@ -52,6 +52,8 @@ const SurveyPage: React.FC = () => {
 			if (isPageComplete) {
 				resetNextButton();
 				setIsStepComplete(true);
+			} else {
+				setIsStepComplete(false);
 			}
 		}
 		return () => {
@@ -63,7 +65,7 @@ const SurveyPage: React.FC = () => {
 		return <LoadingScreen loading={true} message="Loading survey page..." />;
 	}
 	return (
-		<div className="w-3/4 mx-auto px-3">
+		<div className="w-fit mx-auto px-3">
 			<SurveyTemplate surveyPage={surveyPageWrapper.data} />
 		</div>
 	);
