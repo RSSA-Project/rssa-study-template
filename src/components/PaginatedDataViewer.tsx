@@ -1,8 +1,8 @@
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/16/solid';
+import { useStudy, useTelemetry } from '@rssa-project/api';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import clsx from 'clsx';
-import { useState } from 'react';
-import { useStudy } from '@rssa-project/api';
+import { useState, type ReactNode } from 'react';
 
 type PaginatedDataList<T> = {
 	data: T[];
@@ -24,6 +24,8 @@ const PaginatedResourceViewer = <T extends { id: string }>({
 	const [selectedItem, setSelectedItem] = useState<T | null>(null);
 	const { studyApi } = useStudy();
 
+	const { trackEvent } = useTelemetry();
+
 	const fetchResources = async (page: number) => {
 		const offset = page * limit;
 		return studyApi.get<PaginatedDataList<T>>(`${apiResourceTag}/?offset=${offset}&limit=${limit}`);
@@ -41,6 +43,20 @@ const PaginatedResourceViewer = <T extends { id: string }>({
 			setSelectedItem(null);
 		} else {
 			setSelectedItem(item);
+		}
+	};
+
+	const handleNavClick = (direction: 'left' | 'right') => {
+		const currPage = page;
+		if (direction == 'left') {
+			const nextPage = Math.max(currPage - 1, 0);
+			setPage(nextPage);
+			trackEvent('navigate_gallery_left', { from: currPage, to: nextPage });
+		}
+		if (direction == 'right') {
+			const nextPage = page + 1 < totalPages ? currPage + 1 : currPage;
+			setPage(nextPage);
+			trackEvent('navigate_gallery_right', { from: currPage, to: nextPage });
 		}
 	};
 
@@ -64,38 +80,46 @@ const PaginatedResourceViewer = <T extends { id: string }>({
 		<div className="flex flex-col">
 			{isFetching && <div className="fixed top-0 left-0 w-full h-1 bg-blue-500 animate-pulse z-50"></div>}
 			<div className="">{children(resourceList, selectedItem, handleItemClick)}</div>
-			<div className={clsx('flex-shrink-0 p-4', 'flex items-center justify-center')}>
-				<button
-					onClick={() => setPage((old) => Math.max(old - 1, 0))}
-					disabled={page === 0 || isFetching}
-					className={clsx(
-						'px-4 py-2 mx-1 text-sm font-medium text-gray-700 rounded-3',
-						'bg-amber-500 rounded-md disabled:opacity-50',
-						'cursor-pointer',
-						'disabled:cursor-not-allowed'
-					)}
-				>
-					<span className="sr-only">Left navigation button</span>
+			<div className={clsx('shrink-0 p-4', 'flex items-center justify-center')}>
+				<NavButton onClickCallback={() => handleNavClick('left')} disabled={page === 0 || isFetching}>
 					<ChevronLeftIcon className="h-9 w-9" />
-				</button>
+					<span className="sr-only">Left navigation button</span>
+				</NavButton>
 				<span className="text-sm text-gray-600 dark:text-gray-300 mx-4">
 					Page {page + 1} of {totalPages}
 				</span>
-				<button
-					onClick={() => setPage((old) => (page + 1 < totalPages ? old + 1 : old))}
+				<NavButton
+					onClickCallback={() => handleNavClick('right')}
 					disabled={page + 1 >= totalPages || isFetching}
-					className={clsx(
-						'px-4 py-2 mx-1 text-sm font-medium text-gray-700 rounded-3',
-						'bg-amber-500 rounded-md disabled:opacity-50',
-						'cursor-pointer',
-						'disabled:cursor-not-allowed'
-					)}
 				>
 					<span className="sr-only">Right navigation button</span>
 					<ChevronRightIcon className="h-9 w-9" />
-				</button>
+				</NavButton>
 			</div>
 		</div>
+	);
+};
+
+interface NavBottonProps {
+	children: ReactNode;
+	onClickCallback: () => void;
+	disabled: boolean;
+}
+
+const NavButton = ({ children, onClickCallback, disabled }: NavBottonProps) => {
+	return (
+		<button
+			onClick={onClickCallback}
+			disabled={disabled}
+			className={clsx(
+				'px-4 py-2 mx-1 text-sm font-medium text-gray-700 rounded-3',
+				'bg-amber-500 rounded-md disabled:opacity-50',
+				'cursor-pointer',
+				'disabled:cursor-not-allowed'
+			)}
+		>
+			{children}
+		</button>
 	);
 };
 

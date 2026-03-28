@@ -17,7 +17,6 @@ const ContentBlock: React.FC<ContentBlockProps> = ({ content, onComplete }) => {
 		queryKey: ['currentPageResponses', content.study_step_page_id],
 		queryFn: async () => studyApi.get<SurveyItemResponse[]>(`responses/survey/${content.study_step_page_id!}`),
 		select: (data) => (Array.isArray(data) ? data : []),
-		// If content or content.study_step_page_id is undefined, don't run the query.
 		enabled: !!content.study_step_page_id,
 		refetchOnWindowFocus: false,
 	});
@@ -31,7 +30,6 @@ const ContentBlock: React.FC<ContentBlockProps> = ({ content, onComplete }) => {
 			onComplete(content.id);
 		}
 	}, [answeredItemIds.size, content, onComplete]);
-
 	return (
 		<div>
 			{content.items.map((item) => {

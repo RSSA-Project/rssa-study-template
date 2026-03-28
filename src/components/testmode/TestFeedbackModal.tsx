@@ -2,9 +2,9 @@ import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react';
 import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useStudy } from '@rssa-project/api';
-import { useStudyUrlParams } from '../contexts/StudyUrlParamsContext';
+import { useStudyUrlParams } from '../../hooks';
 
-import type { StudyStep } from '../types/rssa.types';
+import type { StudyStep } from '../../types/rssa.types';
 
 interface FeedbackPayload {
 	study_step_id: string;

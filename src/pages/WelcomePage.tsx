@@ -29,7 +29,7 @@ const WelcomePage: React.FC<WelcomePageProps> = ({
 	isStudyReady = false,
 	onStudyStart,
 	title = 'Welcome!',
-	subtitle = 'Thank you for participating in The Peer Recommendation Platform study. Your involvement is crucial for our research.',
+	subtitle = 'Thank you for participating in this study.',
 	ContentComponent,
 	children,
 }) => {

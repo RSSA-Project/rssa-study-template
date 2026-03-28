@@ -1,8 +1,8 @@
+import { useStudy, useTelemetry } from '@rssa-project/api';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { useStudy } from '@rssa-project/api';
 import type {
 	MovieDetails,
 	ParticipantRatingPayload,
@@ -30,14 +30,17 @@ const MovieCard = ({
 	onClick: () => void;
 }) => {
 	const { studyStep } = useOutletContext<StudyLayoutContextType>();
+	const { studyApi } = useStudy();
+	const { trackEvent } = useTelemetry();
+
 	const [currentRatedItem, setCurrentRatedItem] = useState<RatedItem | undefined>(userRating);
 	const [movieRating, setMovieRating] = useState<number>(0);
 	const [prevRating, setPrevRating] = useState<number>(0);
 	const [isHovered, setIsHovered] = useState<boolean>(false);
-	const { studyApi } = useStudy();
+
+	const hoverStartTimeRef = useRef<number | null>(null);
 
 	useEffect(() => {
-		// Sync local state when prop changes (e.g. initial load or parent update)
 		if (userRating) {
 			setCurrentRatedItem(userRating);
 			setMovieRating(userRating.rating);
@@ -50,8 +53,6 @@ const MovieCard = ({
 		mutationKey: ['movieRatings'],
 		mutationFn: async (newRating: number): Promise<MutationResult> => {
 			if (currentRatedItem && currentRatedItem.id) {
-				// PATCH: Update existing rating
-				// The backend schema ParticipantRatingUpdate only accepts id, version, and rated_item.
 				const patchPayload = {
 					id: currentRatedItem.id,
 					version: currentRatedItem.version,
@@ -73,7 +74,6 @@ const MovieCard = ({
 					version: (currentRatedItem.version || 0) + 1,
 				};
 			} else {
-				// POST: Create new rating
 				const postPayload: ParticipantRatingPayload = {
 					study_step_id: studyStep.id,
 					study_step_page_id: null,
@@ -104,7 +104,6 @@ const MovieCard = ({
 				rating: result.rating,
 				version: result.version,
 			};
-			// Update local state so next time we know it's an existing item
 			setCurrentRatedItem(newRatingItem);
 
 			queryClient.setQueryData<RatedItem[]>(['movieRatings'], (oldRatings: RatedItem[] | undefined) => {
@@ -125,10 +124,47 @@ const MovieCard = ({
 
 	const handleRating = (newRating: number) => {
 		if (ratingMutation.isPending || newRating === movieRating) return;
+
+		trackEvent(
+			'rating_changed',
+			{
+				old_rating: movieRating,
+				new_rating: newRating,
+			},
+			movie.id
+		);
 		setPrevRating(movieRating);
 		setMovieRating(newRating);
 		ratingMutation.mutateAsync(newRating);
 	};
+
+	const handleMouseEnter = () => {
+		setIsHovered(true);
+		hoverStartTimeRef.current = performance.now();
+	};
+
+	const handleMouseLeave = () => {
+		setIsHovered(false);
+
+		if (hoverStartTimeRef.current !== null) {
+			const durationMs = Math.round(performance.now() - hoverStartTimeRef.current);
+			if (durationMs > 500) {
+				trackEvent('item_hover_duration', { duration_ms: durationMs }, movie.id);
+			}
+			hoverStartTimeRef.current = null;
+		}
+	};
+
+	useEffect(() => {
+		return () => {
+			if (hoverStartTimeRef.current !== null) {
+				const durationMs = Math.round(performance.now() - hoverStartTimeRef.current);
+				if (durationMs > 500) {
+					trackEvent('item_hover_duration', { duration_ms: durationMs, unmounted: true }, movie.id);
+				}
+			}
+		};
+	}, [trackEvent, movie.id]);
 
 	return (
 		<div
@@ -138,9 +174,12 @@ const MovieCard = ({
 				'transform transition-transform duration-300 hover:scale-115 cursor-pointer',
 				'flex flex-col hover:z-10'
 			)}
-			onMouseEnter={() => setIsHovered(true)}
-			onMouseLeave={() => setIsHovered(false)}
-			onClick={onClick}
+			onMouseEnter={handleMouseEnter}
+			onMouseLeave={handleMouseLeave}
+			onClick={() => {
+				trackEvent('movie_clicked', {}, movie.id);
+				onClick();
+			}}
 		>
 			<div className="relative lg:h-54 xxl:h-81 flex items-center justify-center bg-black">
 				<img
@@ -151,7 +190,7 @@ const MovieCard = ({
 						e.currentTarget.src = 'https://placehold.co/400x600/000000/FFFFFF?text=No+Image';
 					}}
 				/>
-				<div className={clsx('absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent')}>
+				<div className={clsx('absolute inset-0 bg-linear-to-t from-black/90 via-black/40 to-transparent')}>
 					<div className="absolute bottom-0 w-full pt-4 px-1 flex flex-col items center text-center">
 						<p className="text-white text-md font-medium mb-0 leading-tight">{movie.title}</p>
 						<p className="text-gray-300 text-md mx-auto">{movie.year}</p>

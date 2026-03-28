@@ -1,12 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTelemetry } from '@rssa-project/api';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import LoadingScreen from '../components/loadingscreen/LoadingScreen';
 import NextButton from '../components/NextButton';
-import { NextButtonControlProvider } from '../contexts/NextButtonControlProvider';
-import { PageCompletionProvider } from '../contexts/pageCompletionContext';
-import { StepCompletionProvider } from '../contexts/stepCompletionContext';
-import { useNextButtonControl } from '../hooks/useNextButtonControl';
-import { useStepCompletion } from '../hooks/useStepCompletion';
+import { useNextButtonControl, useStepCompletion } from '../hooks';
+import { NextButtonControlProvider, PageCompletionProvider, StepCompletionProvider } from '../providers';
 import type { StudyStep } from '../types/rssa.types';
 import type { StudyLayoutContextType } from '../types/study.types';
 import Footer from './StudyFooter';
@@ -18,6 +16,10 @@ interface StudyLayoutProps {
 
 const StudyLayoutContent: React.FC<StudyLayoutProps> = ({ stepApiData }) => {
 	const navigate = useNavigate();
+
+	const { trackEvent } = useTelemetry();
+	const startTime = useRef<number>(0);
+
 	const [buttonLoader, setButtonLoader] = useState<boolean>(false);
 	const { isStepComplete, setIsStepComplete } = useStepCompletion();
 	const { setButtonControl, buttonControl } = useNextButtonControl();
@@ -29,9 +31,16 @@ const StudyLayoutContent: React.FC<StudyLayoutProps> = ({ stepApiData }) => {
 
 	const handleNextButtonClick = useCallback(() => {
 		if (!stepApiData) return;
+
+		const durationMs = Math.round(performance.now() - startTime.current);
+		trackEvent('step_completed', {
+			step: { id: stepApiData.id, name: stepApiData.name },
+			duration_ms: durationMs,
+		});
 		navigate(stepApiData.next!);
 		setIsStepComplete(false);
-	}, [stepApiData, navigate, setIsStepComplete]);
+		startTime.current = performance.now();
+	}, [stepApiData, navigate, setIsStepComplete, trackEvent]);
 
 	const handleNextButtonReset = useCallback(() => {
 		setButtonControl({
@@ -73,13 +82,15 @@ const StudyLayoutContent: React.FC<StudyLayoutProps> = ({ stepApiData }) => {
 			<div className="px-2 rounded-md mb-24">
 				<Outlet context={outletContextValue} />
 				<nav className="p-4 bg-gray-200 flex justify-end mt-3">
-					<NextButton
-						handleClick={buttonControl.action}
-						disabled={buttonControl.isDisabled}
-						loading={buttonLoader}
-					>
-						{buttonControl.label}
-					</NextButton>
+					{stepApiData?.next && (
+						<NextButton
+							handleClick={buttonControl.action}
+							disabled={buttonControl.isDisabled}
+							loading={buttonLoader}
+						>
+							{buttonControl.label}
+						</NextButton>
+					)}
 				</nav>
 			</div>
 			<Footer />

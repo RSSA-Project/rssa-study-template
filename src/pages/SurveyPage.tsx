@@ -1,6 +1,6 @@
-import { useStudy } from '@rssa-project/api';
+import { useStudy, useTelemetry } from '@rssa-project/api';
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import LoadingScreen from '../components/loadingscreen/LoadingScreen';
 import { useNextButtonControl } from '../hooks/useNextButtonControl';
@@ -17,6 +17,13 @@ const SurveyPage: React.FC = () => {
 	const { setIsStepComplete } = useStepCompletion();
 	const { isPageComplete } = usePageCompletion();
 	const { setButtonControl } = useNextButtonControl();
+
+	const { trackEvent } = useTelemetry();
+	const startTime = useRef<number>(0);
+
+	useEffect(() => {
+		startTime.current = performance.now();
+	}, []);
 
 	useEffect(() => {
 		if (studyStep.survey_api_root) {
@@ -38,10 +45,19 @@ const SurveyPage: React.FC = () => {
 			return undefined;
 		},
 	});
+	console.log('SUREVEY', surveyPageWrapper);
+	useEffect(() => {
+		if (isPageComplete) {
+			const durationMs = Math.round(performance.now() - startTime.current);
+			trackEvent('survey_page_completed', {
+				page: currentPageId,
+				duration_ms: durationMs,
+			});
+		}
+	}, [isPageComplete, trackEvent, currentPageId]);
 
 	useEffect(() => {
 		if (!surveyPageWrapper) return;
-
 		if (surveyPageWrapper.next_id) {
 			setButtonControl({
 				label: 'Continue',
@@ -59,9 +75,10 @@ const SurveyPage: React.FC = () => {
 		return () => {
 			resetNextButton();
 		};
-	}, [isPageComplete, setButtonControl, resetNextButton, surveyPageWrapper, setIsStepComplete]);
+	}, [isPageComplete, setButtonControl, resetNextButton, surveyPageWrapper, setIsStepComplete, trackEvent]);
 
 	if (!surveyPageWrapper) {
+		console.log('WRAwer weloader?');
 		return <LoadingScreen loading={true} message="Loading survey page..." />;
 	}
 	return (

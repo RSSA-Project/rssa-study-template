@@ -1,14 +1,15 @@
+import { TelemetryProvider, useParticipant, useStudy, useStudyConfig, type StudyStepConfig } from '@rssa-project/api';
 import { useIsRestoring, useQueryClient } from '@tanstack/react-query';
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
-import { useStudy, useStudyConfig, useParticipant, type StudyStepConfig } from '@rssa-project/api';
-import StudyLayout from '../layouts/StudyLayout';
 import LoadingScreen from '../components/loadingscreen/LoadingScreen';
-import type { StudyStep } from '../types/rssa.types';
-import { StudyUrlParamsProvider } from '../contexts/StudyUrlParamsContext';
-import TestModeConfirmation from '../components/TestModeConfirmation';
+import TestModeConfirmation from '../components/testmode/TestModeConfirmation';
+import TestModeIndicator from '../components/testmode/TestModeIndicator';
+import StudyLayout from '../layouts/StudyLayout';
 import StudyExitPage from '../pages/StudyExitPage';
-import TestModeIndicator from '../components/TestModeIndicator';
+import { StudyUrlParamsProvider } from '../providers/StudyUrlParamsContext';
+import type { NavigationWrapper, StudyParticipant, StudyStep } from '../types/rssa.types';
+import usePersistentUrlParams from '../hooks/usePersistentUrlParams';
 
 interface RouteWrapperProps {
 	componentMap: { [key: string]: React.FC };
@@ -24,15 +25,16 @@ const RouteWrapper: React.FC<RouteWrapperProps> = ({ componentMap, WelcomePage }
 	const location = useLocation();
 	const navigate = useNavigate();
 	const { studyApi } = useStudy();
-	const { jwt, setJwt } = useParticipant(); // Access JWT to react to authentication changes
+	const { jwt } = useParticipant();
 	const queryClient = useQueryClient();
 	const isRestoring = useIsRestoring();
 
-	const [loadedParticipant, setLoadedParticipant] = useState<any>(null);
+	const participantParams = usePersistentUrlParams();
+	console.log(participantParams);
+	const [loadedParticipant, setLoadedParticipant] = useState<StudyParticipant | null>(null);
 
 	useEffect(() => {
 		const fetchParticipant = async () => {
-			// Avoid fetching if no JWT is present (unless we want to fail fast)
 			if (!jwt) {
 				setLoadedParticipant(null); // Reset if logged out
 				return;
@@ -42,44 +44,21 @@ const RouteWrapper: React.FC<RouteWrapperProps> = ({ componentMap, WelcomePage }
 				// participants/me endpoint requires authentication
 				// Explicitly set the JWT on the client to avoid race conditions with Context updates
 				studyApi.setJwt(jwt);
-				const response = await studyApi.get<any>('participants/me');
-				setLoadedParticipant(response.data || response);
+				const response = await studyApi.get<StudyParticipant>('participants/me');
+				setLoadedParticipant(response);
 			} catch (error) {
-				// Silent failure if not authenticated or not found
 				console.error('Failed to fetch participant details:', error);
 			}
 		};
 		fetchParticipant();
-	}, [studyApi, jwt]); // Re-run when JWT changes (e.g. after consent/enrollment)
+	}, [studyApi, jwt]);
 
-	// State for Test Mode flow
 	const [isTestModeConfirmed, setIsTestModeConfirmed] = useState(false);
 	const [showExitPage, setShowExitPage] = useState(false);
-
-	// Parse URL parameters for participant details only once on mount
-	const [participantParams] = useState(() => {
-		const searchParams = new URLSearchParams(window.location.search);
-		let participantTypeKey = 'unknown';
-		let externalId = 'N/A';
-
-		for (const [key, value] of searchParams.entries()) {
-			if (key.endsWith('_pid')) {
-				const typePrefix = key.split('_pid')[0];
-				if (typePrefix) {
-					participantTypeKey = typePrefix;
-					externalId = value;
-					break; // Use the first match
-				}
-			}
-		}
-
-		return { participantTypeKey, externalId };
-	});
 
 	const isTestUser = participantParams.participantTypeKey === 'test';
 	const shouldShowConfirmation = isTestUser && !isTestModeConfirmed && !showExitPage;
 
-	// Persist Test Mode if the loaded participant is a test user
 	useEffect(() => {
 		if (loadedParticipant?.participant_type?.key === 'test') {
 			setIsTestModeConfirmed(true);
@@ -105,16 +84,16 @@ const RouteWrapper: React.FC<RouteWrapperProps> = ({ componentMap, WelcomePage }
 			if (!configData) return;
 
 			const stepFromConfig = configData.steps.find((step: StudyStepConfig) => step.path === stepPath);
-
 			if (stepFromConfig && stepFromConfig.step_id !== currentStepData?.id) {
 				try {
-					const response = await studyApi.get<any>(`steps/${stepFromConfig.step_id}`);
+					const response = await studyApi.get<NavigationWrapper<StudyStep>>(
+						`steps/${stepFromConfig.step_id}`
+					);
 					const stepData = response.data || response;
 
 					if (response.next_path) {
 						stepData.next = response.next_path;
 					}
-
 					setCurrentStepData(stepData);
 				} catch (error) {
 					console.error('Failed to load step data:', error);
@@ -137,7 +116,7 @@ const RouteWrapper: React.FC<RouteWrapperProps> = ({ componentMap, WelcomePage }
 		if (!config?.study_id) return;
 
 		try {
-			const response = await studyApi.get<any>(`studies/${config.study_id}/steps/first`);
+			const response = await studyApi.get<NavigationWrapper<StudyStep>>(`studies/${config.study_id}/steps/first`);
 			const firstStep = response.data || response;
 
 			if (firstStep) {
@@ -163,7 +142,6 @@ const RouteWrapper: React.FC<RouteWrapperProps> = ({ componentMap, WelcomePage }
 		});
 	}, [config?.steps, componentMap]);
 
-	// Context params: Priority to loaded participant, fallback to URL params
 	const contextParams = useMemo(() => {
 		if (loadedParticipant?.participant_type?.key) {
 			return {
@@ -178,32 +156,6 @@ const RouteWrapper: React.FC<RouteWrapperProps> = ({ componentMap, WelcomePage }
 		};
 	}, [loadedParticipant, participantParams, isTestModeConfirmed]);
 
-	// Clear Cache and Session on Base URL or new PID entry
-	useEffect(() => {
-		const searchParams = new URLSearchParams(window.location.search);
-		const hasPidParam = Array.from(searchParams.keys()).some((key) => key.endsWith('_pid'));
-		const isBaseUrl = location.pathname === '/' || location.pathname === '/welcome';
-
-		if (isBaseUrl || hasPidParam) {
-			// console.log("Resetting session due to base URL or PID param entry.");
-			setJwt(null);
-			const studyId = import.meta.env.VITE_RSSA_STUDY_ID;
-			if (studyId) {
-				// Iterate and remove all keys starting with studyId
-				const prefix = `${studyId}_`;
-				Object.keys(localStorage).forEach((key) => {
-					if (key.startsWith(prefix)) {
-						localStorage.removeItem(key);
-					}
-				});
-			} else {
-				// Fallback or warning
-				console.warn('VITE_RSSA_STUDY_ID is not defined, cannot clear scoped local storage.');
-			}
-			queryClient.clear();
-		}
-	}, []); // Run once on mount
-
 	if (showExitPage) {
 		return <StudyExitPage />;
 	}
@@ -216,35 +168,28 @@ const RouteWrapper: React.FC<RouteWrapperProps> = ({ componentMap, WelcomePage }
 
 	return (
 		<StudyUrlParamsProvider params={contextParams}>
-			{isTestModeConfirmed && <TestModeIndicator studyStep={currentStepData} />}
-			<TestModeConfirmation
-				isOpen={shouldShowConfirmation}
-				onConfirm={handleConfirmTestMode}
-				onCancel={handleCancelTestMode}
-			/>
-			{/* 
-        We only render the main routes if we are NOT waiting for confirmation.
-        However, blocking rendering might cause issues if hooks depend on it.
-        Better to render but maybe overlay the modal.
-        Since we return the modal above, and isOpen controls visibility, 
-        we can proceed to render the app behind it (or block it).
-        Given the requirement "intercept... before entering", blocking is safer 
-        to prevent any auto-initialization effects.
-       */}
-			{!shouldShowConfirmation && (
-				<Suspense fallback={<div className="p-8">Loading step component...</div>}>
-					<Routes>
-						{WelcomePage && (
-							<Route
-								path="/welcome"
-								element={<WelcomePage isStudyReady={!isLoading} onStudyStart={handleStartStudy} />}
-							/>
-						)}
-						<Route path="/" element={<Navigate to="/welcome" replace />} />
-						<Route element={<StudyLayout stepApiData={currentStepData} />}>{dynamicRoutes}</Route>
-					</Routes>
-				</Suspense>
-			)}
+			<TelemetryProvider apiClient={studyApi}>
+				{isTestModeConfirmed && <TestModeIndicator studyStep={currentStepData} />}
+				<TestModeConfirmation
+					isOpen={shouldShowConfirmation}
+					onConfirm={handleConfirmTestMode}
+					onCancel={handleCancelTestMode}
+				/>
+				{!shouldShowConfirmation && (
+					<Suspense fallback={<div className="p-8">Loading step component...</div>}>
+						<Routes>
+							{WelcomePage && (
+								<Route
+									path="/welcome"
+									element={<WelcomePage isStudyReady={!isLoading} onStudyStart={handleStartStudy} />}
+								/>
+							)}
+							<Route path="/" element={<Navigate to="/welcome" replace />} />
+							<Route element={<StudyLayout stepApiData={currentStepData} />}>{dynamicRoutes}</Route>
+						</Routes>
+					</Suspense>
+				)}
+			</TelemetryProvider>
 		</StudyUrlParamsProvider>
 	);
 };

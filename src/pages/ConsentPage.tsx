@@ -1,19 +1,23 @@
 import { Checkbox } from '@headlessui/react';
+import { useParticipant, useStudy, useTelemetry } from '@rssa-project/api';
 import { useMutation } from '@tanstack/react-query';
 import { clsx } from 'clsx';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { useParticipant, useStudy } from '@rssa-project/api';
-import type { StudyLayoutContextType } from '../types/study.types';
+import usePersistentUrlParams from '../hooks/usePersistentUrlParams';
 import { useStepCompletion } from '../hooks/useStepCompletion';
+import type { StudyLayoutContextType } from '../types/study.types';
 
-import { useStudyUrlParams } from '../contexts/StudyUrlParamsContext';
+type ParticipantSourceMeta = {
+	[key: string]: string;
+};
 
 export interface BaseParticipant {
 	participant_type_key: string;
 	external_id: string;
 	current_step_id: string;
 	current_page_id?: string | null;
+	source_meta?: ParticipantSourceMeta;
 }
 
 export interface ParticipantTokenObject {
@@ -23,34 +27,36 @@ export interface ParticipantTokenObject {
 
 interface ConsentPageProps {
 	children: React.ReactNode;
-	participantTypeKey?: string;
-	participantTypeId?: string;
-	externalId?: string;
 	onConsentSuccess?: (token: string, resumeCode: string) => void;
 	title?: string;
 	itemTitle?: string;
+	sourceMeta?: ParticipantSourceMeta;
 }
 
 const ConsentPage: React.FC<ConsentPageProps> = ({
 	children,
-	participantTypeKey,
-	externalId,
 	onConsentSuccess,
 	title = 'Key Information About the Research Study',
 	itemTitle,
+	sourceMeta,
 }) => {
 	const { studyStep } = useOutletContext<StudyLayoutContextType>();
 	const { studyApi } = useStudy();
 	const { setJwt } = useParticipant();
+
+	const { trackEvent, forceFlush } = useTelemetry();
+	const startTime = useRef<number>(0);
+
 	const [agreed, setAgreed] = useState(false);
 	const [resumeCode, setResumeCode] = useState<string>();
 	const { isStepComplete, setIsStepComplete } = useStepCompletion();
-	const { participantTypeKey: ctxKey, externalId: ctxId } = useStudyUrlParams();
+	const particpantParams = usePersistentUrlParams();
 
-	// Determine effective values: Props > Context > Default
-	const effectiveKey = participantTypeKey || (ctxKey !== 'unknown' ? ctxKey : 'unknown');
-	const effectiveExternalId = externalId || (ctxId !== 'N/A' ? ctxId : 'N/A');
+	useEffect(() => {
+		startTime.current = performance.now();
+	}, []);
 
+	console.log('SOURCE META', sourceMeta, particpantParams);
 	const consentMutation = useMutation({
 		mutationFn: (participantData: BaseParticipant) => {
 			return studyApi.post<BaseParticipant, ParticipantTokenObject>(
@@ -62,6 +68,11 @@ const ConsentPage: React.FC<ConsentPageProps> = ({
 			setJwt(tokenObject.token);
 			setResumeCode(tokenObject.resume_code);
 			setIsStepComplete(true);
+
+			const durationMs = Math.round(performance.now() - startTime.current);
+			trackEvent('consent_accepted', { duration_ms: durationMs });
+			forceFlush();
+
 			onConsentSuccess?.(tokenObject.token, tokenObject.resume_code);
 		},
 		onError: (error) => {
@@ -73,11 +84,12 @@ const ConsentPage: React.FC<ConsentPageProps> = ({
 	const handleConsent = useCallback(async () => {
 		if (!studyStep) return;
 		consentMutation.mutate({
-			participant_type_key: effectiveKey,
-			external_id: effectiveExternalId,
+			participant_type_key: particpantParams['participantTypeKey'],
+			external_id: particpantParams['externalId'],
 			current_step_id: studyStep?.id,
+			source_meta: particpantParams['sourceMeta'],
 		});
-	}, [studyStep, consentMutation, effectiveKey, effectiveExternalId]);
+	}, [studyStep, consentMutation, particpantParams]);
 
 	const consentButtonDisabled = !agreed || consentMutation.isPending || isStepComplete;
 
@@ -178,7 +190,7 @@ const ConsentPage: React.FC<ConsentPageProps> = ({
 					<p>Thank you for agreeing to participate in the study.</p>
 					<div
 						className={clsx(
-							'p-3 mx-auto mt-3 mb-3 w-[18rem] h-[9rem] bg-gray-200 rounded-md',
+							'p-3 mx-auto mt-3 mb-3 w-[18rem] h-36 bg-gray-200 rounded-md',
 							'text-3xl text-center content-center text-amber-900'
 						)}
 					>

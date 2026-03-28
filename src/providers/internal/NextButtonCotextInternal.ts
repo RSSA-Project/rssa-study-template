@@ -2,8 +2,8 @@ import { createContext, type Dispatch, type SetStateAction } from 'react';
 
 export interface NextButtonControl {
 	label: string;
-	action: () => void; // The function to execute on click
-	isDisabled: boolean; // Whether the button is grayed out
+	action: () => void;
+	isDisabled: boolean;
 }
 
 export const defaultControl: NextButtonControl = {

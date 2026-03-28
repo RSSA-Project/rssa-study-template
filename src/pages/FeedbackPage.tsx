@@ -24,7 +24,6 @@ export type TextResponsePayload = {
 };
 
 const FeedbackPage: React.FC = () => {
-	// @ts-ignore
 	const { studyStep, resetNextButton } = useOutletContext<StudyLayoutContextType>();
 
 	const { setButtonControl } = useNextButtonControl();
