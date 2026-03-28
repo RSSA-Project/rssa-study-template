@@ -30,7 +30,6 @@ const RouteWrapper: React.FC<RouteWrapperProps> = ({ componentMap, WelcomePage }
 	const isRestoring = useIsRestoring();
 
 	const participantParams = usePersistentUrlParams();
-	console.log(participantParams);
 	const [loadedParticipant, setLoadedParticipant] = useState<StudyParticipant | null>(null);
 
 	useEffect(() => {

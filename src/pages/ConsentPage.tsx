@@ -38,7 +38,6 @@ const ConsentPage: React.FC<ConsentPageProps> = ({
 	onConsentSuccess,
 	title = 'Key Information About the Research Study',
 	itemTitle,
-	sourceMeta,
 }) => {
 	const { studyStep } = useOutletContext<StudyLayoutContextType>();
 	const { studyApi } = useStudy();
@@ -56,7 +55,6 @@ const ConsentPage: React.FC<ConsentPageProps> = ({
 		startTime.current = performance.now();
 	}, []);
 
-	console.log('SOURCE META', sourceMeta, particpantParams);
 	const consentMutation = useMutation({
 		mutationFn: (participantData: BaseParticipant) => {
 			return studyApi.post<BaseParticipant, ParticipantTokenObject>(

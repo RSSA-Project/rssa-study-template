@@ -45,7 +45,7 @@ const SurveyPage: React.FC = () => {
 			return undefined;
 		},
 	});
-	console.log('SUREVEY', surveyPageWrapper);
+
 	useEffect(() => {
 		if (isPageComplete) {
 			const durationMs = Math.round(performance.now() - startTime.current);
@@ -78,7 +78,6 @@ const SurveyPage: React.FC = () => {
 	}, [isPageComplete, setButtonControl, resetNextButton, surveyPageWrapper, setIsStepComplete, trackEvent]);
 
 	if (!surveyPageWrapper) {
-		console.log('WRAwer weloader?');
 		return <LoadingScreen loading={true} message="Loading survey page..." />;
 	}
 	return (
