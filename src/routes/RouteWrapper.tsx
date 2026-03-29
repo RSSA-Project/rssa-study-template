@@ -5,11 +5,11 @@ import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-
 import LoadingScreen from '../components/loadingscreen/LoadingScreen';
 import TestModeConfirmation from '../components/testmode/TestModeConfirmation';
 import TestModeIndicator from '../components/testmode/TestModeIndicator';
+import usePersistentUrlParams from '../hooks/usePersistentUrlParams';
 import StudyLayout from '../layouts/StudyLayout';
 import StudyExitPage from '../pages/StudyExitPage';
 import { StudyUrlParamsProvider } from '../providers/StudyUrlParamsContext';
 import type { NavigationWrapper, StudyParticipant, StudyStep } from '../types/rssa.types';
-import usePersistentUrlParams from '../hooks/usePersistentUrlParams';
 
 interface RouteWrapperProps {
 	componentMap: { [key: string]: React.FC };
@@ -29,31 +29,69 @@ const RouteWrapper: React.FC<RouteWrapperProps> = ({ componentMap, WelcomePage }
 	const queryClient = useQueryClient();
 	const isRestoring = useIsRestoring();
 
-	const participantParams = usePersistentUrlParams();
 	const [loadedParticipant, setLoadedParticipant] = useState<StudyParticipant | null>(null);
+	const [isTestModeConfirmed, setIsTestModeConfirmed] = useState(false);
+	const [showExitPage, setShowExitPage] = useState(false);
+	const [currentStepData, setCurrentStepData] = useState<StudyStep>();
+
+	const studyId = useMemo(() => studyApi.getStudyId(), [studyApi]);
+	const participantParams = usePersistentUrlParams(studyId!);
+	const { data: config, isLoading } = useStudyConfig(studyId!);
+	if (!studyId) {
+		throw new Error('VITE_STUDY_ID is missing. Please ensure it is set in your environment file.');
+	}
+
+	useEffect(() => {
+		const isEntryPoint = location.pathname === '/' || location.pathname === '/welcome';
+		const hasQueryParams = location.search.length > 0;
+
+		if (isEntryPoint && studyId) {
+			if (!hasQueryParams) {
+				[localStorage, sessionStorage].forEach((storage) => {
+					Object.keys(storage).forEach((key) => {
+						if (key.includes(studyId)) {
+							storage.removeItem(key);
+						}
+					});
+				});
+				queryClient.clear();
+			} else {
+				queryClient.clear();
+			}
+		}
+	}, [location.pathname, location.search, queryClient, studyId]);
 
 	useEffect(() => {
 		const fetchParticipant = async () => {
+			const isEntryPoint = location.pathname === '/' || location.pathname === '/welcome';
+			const hasQueryParams = location.search.length > 0;
+
+			if (isEntryPoint && !hasQueryParams) {
+				setLoadedParticipant(null);
+				return;
+			}
+
 			if (!jwt) {
-				setLoadedParticipant(null); // Reset if logged out
+				setLoadedParticipant(null);
 				return;
 			}
 
 			try {
-				// participants/me endpoint requires authentication
-				// Explicitly set the JWT on the client to avoid race conditions with Context updates
 				studyApi.setJwt(jwt);
 				const response = await studyApi.get<StudyParticipant>('participants/me');
 				setLoadedParticipant(response);
-			} catch (error) {
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			} catch (error: any) {
 				console.error('Failed to fetch participant details:', error);
+
+				if (error?.response?.status === 401 || error?.response?.status === 403) {
+					setLoadedParticipant(null);
+				}
 			}
 		};
-		fetchParticipant();
-	}, [studyApi, jwt]);
 
-	const [isTestModeConfirmed, setIsTestModeConfirmed] = useState(false);
-	const [showExitPage, setShowExitPage] = useState(false);
+		fetchParticipant();
+	}, [studyApi, jwt, location.pathname, location.search]);
 
 	const isTestUser = participantParams.participantTypeKey === 'test';
 	const shouldShowConfirmation = isTestUser && !isTestModeConfirmed && !showExitPage;
@@ -64,20 +102,9 @@ const RouteWrapper: React.FC<RouteWrapperProps> = ({ componentMap, WelcomePage }
 		}
 	}, [loadedParticipant]);
 
-	const handleConfirmTestMode = () => {
-		setIsTestModeConfirmed(true);
-	};
+	const handleConfirmTestMode = () => setIsTestModeConfirmed(true);
+	const handleCancelTestMode = () => setShowExitPage(true);
 
-	const handleCancelTestMode = () => {
-		setShowExitPage(true);
-	};
-
-	const studyId = useMemo(() => studyApi.getStudyId(), [studyApi]);
-	if (!studyId) {
-		throw new Error('VITE_STUDY_ID is missing. Please ensure it is set in your environment file.');
-	}
-	const { data: config, isLoading } = useStudyConfig(studyId!);
-	const [currentStepData, setCurrentStepData] = useState<StudyStep>();
 	const loadStepData = useCallback(
 		async (stepPath: string, configData: typeof config) => {
 			if (!configData) return;
@@ -101,6 +128,32 @@ const RouteWrapper: React.FC<RouteWrapperProps> = ({ componentMap, WelcomePage }
 		},
 		[studyApi, currentStepData]
 	);
+
+	const dynamicRoutes = useMemo(() => {
+		if (!config?.steps) return null;
+
+		return config.steps.map((step: StudyStepConfig) => {
+			const { step_id, path, component_type } = step;
+
+			const Component = componentMap[component_type];
+			if (!Component) console.warn(`No component found for type: ${component_type}`);
+			return Component ? <Route key={step_id} path={path} element={<Component />} /> : null;
+		});
+	}, [config?.steps, componentMap]);
+
+	const contextParams = useMemo(() => {
+		if (loadedParticipant?.participant_type?.key) {
+			return {
+				participantTypeKey: loadedParticipant.participant_type.key,
+				externalId: loadedParticipant.external_id || 'N/A',
+				isTestMode: loadedParticipant.participant_type.key === 'test' || isTestModeConfirmed,
+			};
+		}
+		return {
+			...participantParams,
+			isTestMode: isTestModeConfirmed,
+		};
+	}, [loadedParticipant, participantParams, isTestModeConfirmed]);
 
 	useEffect(() => {
 		if (location.pathname === '/welcome' && config) {
@@ -129,31 +182,6 @@ const RouteWrapper: React.FC<RouteWrapperProps> = ({ componentMap, WelcomePage }
 			console.error('Failed to start study:', error);
 		}
 	};
-	const dynamicRoutes = useMemo(() => {
-		if (!config?.steps) return null;
-
-		return config.steps.map((step: StudyStepConfig) => {
-			const { step_id, path, component_type } = step;
-
-			const Component = componentMap[component_type];
-			if (!Component) console.warn(`No component found for type: ${component_type}`);
-			return Component ? <Route key={step_id} path={path} element={<Component />} /> : null;
-		});
-	}, [config?.steps, componentMap]);
-
-	const contextParams = useMemo(() => {
-		if (loadedParticipant?.participant_type?.key) {
-			return {
-				participantTypeKey: loadedParticipant.participant_type.key,
-				externalId: loadedParticipant.external_id || 'N/A',
-				isTestMode: loadedParticipant.participant_type.key === 'test' || isTestModeConfirmed,
-			};
-		}
-		return {
-			...participantParams,
-			isTestMode: isTestModeConfirmed,
-		};
-	}, [loadedParticipant, participantParams, isTestModeConfirmed]);
 
 	if (showExitPage) {
 		return <StudyExitPage />;

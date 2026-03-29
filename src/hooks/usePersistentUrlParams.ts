@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 type ParticipantSourceMeta = {
 	[key: string]: string;
 };
-const usePersistentUrlParams = () => {
-	const storageKey = 'rssa_participant_params';
+const usePersistentUrlParams = (studyId: string) => {
+	const storageKey = `${studyId}_participant_params`;
 
 	const [params, setParams] = useState(() => {
 		const searchParams = new URLSearchParams(window.location.search);
@@ -55,7 +55,7 @@ const usePersistentUrlParams = () => {
 			window.history.replaceState({}, document.title, window.location.pathname);
 			setParams((prev: ParticipantSourceMeta) => ({ ...prev, hasFreshParams: false }));
 		}
-	}, [params.hasFreshParams, params.participantTypeKey, params.externalId, params.sourceMeta]);
+	}, [params.hasFreshParams, params.participantTypeKey, params.externalId, params.sourceMeta, storageKey]);
 
 	return params;
 };

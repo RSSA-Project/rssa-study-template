@@ -43,7 +43,7 @@ function App() {
 					disableHide={true}
 				/>
 			)}
-			<Router basename="/preference-community/">
+			<Router basename="/study-name/">
 				<RouteWrapper componentMap={componentMap} />
 			</Router>
 		</div>

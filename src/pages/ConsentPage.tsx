@@ -2,7 +2,7 @@ import { Checkbox } from '@headlessui/react';
 import { useParticipant, useStudy, useTelemetry } from '@rssa-project/api';
 import { useMutation } from '@tanstack/react-query';
 import { clsx } from 'clsx';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import usePersistentUrlParams from '../hooks/usePersistentUrlParams';
 import { useStepCompletion } from '../hooks/useStepCompletion';
@@ -49,8 +49,13 @@ const ConsentPage: React.FC<ConsentPageProps> = ({
 	const [agreed, setAgreed] = useState(false);
 	const [resumeCode, setResumeCode] = useState<string>();
 	const { isStepComplete, setIsStepComplete } = useStepCompletion();
-	const particpantParams = usePersistentUrlParams();
 
+	const studyId = useMemo(() => studyApi.getStudyId(), [studyApi]);
+	const participantParams = usePersistentUrlParams(studyId || '');
+
+	if (!studyId) {
+		throw new Error('VITE_STUDY_ID is missing. Please ensure it is set in your environment file.');
+	}
 	useEffect(() => {
 		startTime.current = performance.now();
 	}, []);
@@ -82,12 +87,12 @@ const ConsentPage: React.FC<ConsentPageProps> = ({
 	const handleConsent = useCallback(async () => {
 		if (!studyStep) return;
 		consentMutation.mutate({
-			participant_type_key: particpantParams['participantTypeKey'],
-			external_id: particpantParams['externalId'],
+			participant_type_key: participantParams['participantTypeKey'],
+			external_id: participantParams['externalId'],
 			current_step_id: studyStep?.id,
-			source_meta: particpantParams['sourceMeta'],
+			source_meta: participantParams['sourceMeta'],
 		});
-	}, [studyStep, consentMutation, particpantParams]);
+	}, [studyStep, consentMutation, participantParams]);
 
 	const consentButtonDisabled = !agreed || consentMutation.isPending || isStepComplete;
 
