@@ -1,4 +1,4 @@
-import { TelemetryProvider, useParticipant, useStudy, useStudyConfig, type StudyStepConfig } from '@rssa-project/api';
+import { TelemetryProvider, useStudy, useStudyConfig, type StudyStepConfig } from '@rssa-project/api';
 import { useIsRestoring, useQueryClient } from '@tanstack/react-query';
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
@@ -6,10 +6,11 @@ import LoadingScreen from '../components/loadingscreen/LoadingScreen';
 import TestModeConfirmation from '../components/testmode/TestModeConfirmation';
 import TestModeIndicator from '../components/testmode/TestModeIndicator';
 import usePersistentUrlParams from '../hooks/usePersistentUrlParams';
+import { useStudyInitialization } from '../hooks/useStudyInitialization';
 import StudyLayout from '../layouts/StudyLayout';
 import StudyExitPage from '../pages/StudyExitPage';
 import { StudyUrlParamsProvider } from '../providers/StudyUrlParamsContext';
-import type { NavigationWrapper, StudyParticipant, StudyStep } from '../types/rssa.types';
+import type { NavigationWrapper, StudyStep } from '../types/rssa.types';
 
 interface RouteWrapperProps {
 	componentMap: { [key: string]: React.FC };
@@ -25,73 +26,26 @@ const RouteWrapper: React.FC<RouteWrapperProps> = ({ componentMap, WelcomePage }
 	const location = useLocation();
 	const navigate = useNavigate();
 	const { studyApi } = useStudy();
-	const { jwt } = useParticipant();
 	const queryClient = useQueryClient();
 	const isRestoring = useIsRestoring();
 
-	const [loadedParticipant, setLoadedParticipant] = useState<StudyParticipant | null>(null);
 	const [isTestModeConfirmed, setIsTestModeConfirmed] = useState(false);
 	const [showExitPage, setShowExitPage] = useState(false);
 	const [currentStepData, setCurrentStepData] = useState<StudyStep>();
-
 	const studyId = useMemo(() => studyApi.getStudyId(), [studyApi]);
-	const participantParams = usePersistentUrlParams(studyId!);
 	const { data: config, isLoading } = useStudyConfig(studyId!);
+
 	if (!studyId) {
 		throw new Error('VITE_STUDY_ID is missing. Please ensure it is set in your environment file.');
 	}
 
-	useEffect(() => {
-		const isEntryPoint = location.pathname === '/' || location.pathname === '/welcome';
-		const hasQueryParams = location.search.length > 0;
-
-		if (isEntryPoint && studyId) {
-			if (!hasQueryParams) {
-				[localStorage, sessionStorage].forEach((storage) => {
-					Object.keys(storage).forEach((key) => {
-						if (key.includes(studyId)) {
-							storage.removeItem(key);
-						}
-					});
-				});
-				queryClient.clear();
-			} else {
-				queryClient.clear();
-			}
-		}
-	}, [location.pathname, location.search, queryClient, studyId]);
-
-	useEffect(() => {
-		const fetchParticipant = async () => {
-			const isEntryPoint = location.pathname === '/' || location.pathname === '/welcome';
-			const hasQueryParams = location.search.length > 0;
-
-			if (isEntryPoint && !hasQueryParams) {
-				setLoadedParticipant(null);
-				return;
-			}
-
-			if (!jwt) {
-				setLoadedParticipant(null);
-				return;
-			}
-
-			try {
-				studyApi.setJwt(jwt);
-				const response = await studyApi.get<StudyParticipant>('participants/me');
-				setLoadedParticipant(response);
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			} catch (error: any) {
-				console.error('Failed to fetch participant details:', error);
-
-				if (error?.response?.status === 401 || error?.response?.status === 403) {
-					setLoadedParticipant(null);
-				}
-			}
-		};
-
-		fetchParticipant();
-	}, [studyApi, jwt, location.pathname, location.search]);
+	const participantParams = usePersistentUrlParams(studyId);
+	const { isInitializing, loadedParticipant } = useStudyInitialization({
+		studyId,
+		config,
+		studyApi,
+		participantParams,
+	});
 
 	const isTestUser = participantParams.participantTypeKey === 'test';
 	const shouldShowConfirmation = isTestUser && !isTestModeConfirmed && !showExitPage;
@@ -128,6 +82,11 @@ const RouteWrapper: React.FC<RouteWrapperProps> = ({ componentMap, WelcomePage }
 		},
 		[studyApi, currentStepData]
 	);
+	useEffect(() => {
+		if (config && config.steps && !isInitializing) {
+			loadStepData(location.pathname, config);
+		}
+	}, [location.pathname, config, loadStepData, isInitializing]);
 
 	const dynamicRoutes = useMemo(() => {
 		if (!config?.steps) return null;
@@ -147,6 +106,7 @@ const RouteWrapper: React.FC<RouteWrapperProps> = ({ componentMap, WelcomePage }
 				participantTypeKey: loadedParticipant.participant_type.key,
 				externalId: loadedParticipant.external_id || 'N/A',
 				isTestMode: loadedParticipant.participant_type.key === 'test' || isTestModeConfirmed,
+				sourceMeta: participantParams.sourceMeta || '{}',
 			};
 		}
 		return {
@@ -183,14 +143,8 @@ const RouteWrapper: React.FC<RouteWrapperProps> = ({ componentMap, WelcomePage }
 		}
 	};
 
-	if (showExitPage) {
-		return <StudyExitPage />;
-	}
-
-	if (isRestoring) {
-		return <div className="p-8 font-semibold">Restoring session...</div>;
-	}
-
+	if (showExitPage) return <StudyExitPage />;
+	if (isRestoring) return <div className="p-8 font-semibold">Restoring session...</div>;
 	if (isLoading || !config) return <LoadingScreen loading={true} message={'Loading Study Configuration...'} />;
 
 	return (

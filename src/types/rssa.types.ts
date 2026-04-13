@@ -110,16 +110,36 @@ export interface StudyStep {
 
 export interface SurveyConstructItem {
 	id: string;
-	survey_construct_id: string;
+	survey_construct_id?: string;
+	study_step_page_content_id?: string;
+	parent_id?: string;
 	display_name: string;
 	order_position: number;
 }
+
 export interface ScaleLevel {
 	id: string;
 	survey_scale_id: string;
 	display_name: string;
 	value: number;
 	order_position: number;
+}
+
+export interface ItemResponsePayload {
+	study_step_id: string;
+	study_step_page_id: string;
+	survey_item_id: string;
+	survey_construct_id: string;
+	survey_scale_id: string;
+	survey_scale_level_id: string;
+	context_tag: string;
+	version?: number;
+	id?: string;
+}
+
+export interface ItemResponsePatchPayload extends ItemResponsePayload {
+	id: string;
+	version: number;
 }
 
 export interface PageContent {
@@ -130,6 +150,7 @@ export interface PageContent {
 	items: SurveyConstructItem[];
 	scale_levels: ScaleLevel[];
 	display_name: string;
+	order_position: number;
 }
 
 export interface SurveyPageType {
@@ -149,7 +170,7 @@ export interface StudyResponseMetaFields {
 
 export interface SurveyItemResponse {
 	id: string;
-	survey_item_id: string;
+	item_id: string;
 	survey_scale_level_id: string;
 	version?: number;
 }
@@ -182,4 +203,6 @@ export interface StudyParticipant {
 	current_status: string;
 	study_condition: StudyCondition;
 	participant_type: StudyParticipantType;
+	current_step_id: string;
+	current_page_id?: string;
 }

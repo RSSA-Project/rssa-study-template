@@ -1,37 +1,27 @@
 import { Label, Radio, RadioGroup } from '@headlessui/react';
+import { useStudy } from '@rssa-project/api';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
 import DOMPurify from 'dompurify';
 import parse from 'html-react-parser';
 import { useEffect, useMemo, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { useStudy } from '@rssa-project/api';
 import { useDebounce } from '../../hooks/useDebounce';
-import type { ScaleLevel, SurveyConstructItem, SurveyItemResponse } from '../../types/rssa.types';
-import type { StudyLayoutContextType } from '../../types/study.types';
-
-interface ItemBlockProps {
-	contextTag: string;
-	pageId: string;
-	item: SurveyConstructItem;
-	initialResponse: SurveyItemResponse | undefined;
-	scaleLevels: ScaleLevel[];
-	onSelected: (itemId: string) => void;
-}
+import type { SurveyItemResponse } from '../../types/rssa.types';
+import type { ItemBlockProps, StudyLayoutContextType } from '../../types/study.types';
 
 interface ItemResponsePayload {
 	study_step_id: string;
 	study_step_page_id: string;
-	survey_item_id: string;
-	survey_construct_id: string;
+	item_id: string; // Unified from survey_item_id
+	parent_id?: string; // Unified from survey_construct_id or study_step_page_content_id
 	survey_scale_id: string;
 	survey_scale_level_id: string;
 	context_tag: string;
 	version?: number;
 	id?: string;
 }
-
-interface ItemResponsePatchPayload extends ItemResponsePayload {
+export interface ItemResponsePatchPayload extends ItemResponsePayload {
 	id: string;
 	version: number;
 }
@@ -73,17 +63,18 @@ const ItemBlock: React.FC<ItemBlockProps> = ({
 	const responseUpsertMutation = useMutation({
 		mutationKey: ['currentPageResponses', pageId],
 		mutationFn: async (newScaleLevel: string): Promise<MutationResult> => {
+			const resolvedParentId = item.survey_construct_id || item.study_step_page_content_id || undefined;
 			if (initialResponse && initialResponse.id) {
 				const patchPayload: ItemResponsePatchPayload = {
 					study_step_id: studyStep.id,
 					study_step_page_id: pageId,
-					survey_construct_id: item.survey_construct_id,
-					survey_scale_id: scaleLevels[0].survey_scale_id,
+					parent_id: resolvedParentId,
+					survey_scale_id: scaleLevelsSorted[0].survey_scale_id,
 					context_tag: contextTag,
-					survey_item_id: item.id,
+					item_id: item.id,
 					survey_scale_level_id: newScaleLevel,
 					id: initialResponse.id,
-					version: initialResponse.version!, // Use version from the initial response
+					version: initialResponse.version!,
 				};
 
 				await studyApi.patch<ItemResponsePatchPayload, void>(
@@ -94,7 +85,7 @@ const ItemBlock: React.FC<ItemBlockProps> = ({
 				return {
 					type: 'PATCH',
 					id: initialResponse.id,
-					item_id: initialResponse.survey_item_id,
+					item_id: initialResponse.item_id,
 					scale_level_id: newScaleLevel,
 					version: initialResponse.version! + 1,
 				};
@@ -102,10 +93,10 @@ const ItemBlock: React.FC<ItemBlockProps> = ({
 				const postPayload: ItemResponsePayload = {
 					study_step_id: studyStep.id,
 					study_step_page_id: pageId,
-					survey_construct_id: item.survey_construct_id,
-					survey_scale_id: scaleLevels[0].survey_scale_id,
+					parent_id: resolvedParentId,
+					survey_scale_id: scaleLevelsSorted[0].survey_scale_id,
 					context_tag: contextTag,
-					survey_item_id: item.id,
+					item_id: item.id,
 					survey_scale_level_id: newScaleLevel,
 				};
 				const response = await studyApi.post<ItemResponsePayload, SurveyItemResponse>(
@@ -127,12 +118,12 @@ const ItemBlock: React.FC<ItemBlockProps> = ({
 				const existingResponses = oldResponses || [];
 				const newResponse: SurveyItemResponse = {
 					id: result.id,
-					survey_item_id: result.item_id,
+					item_id: result.item_id,
 					survey_scale_level_id: result.scale_level_id,
 					version: result.version,
 				};
 
-				const index = existingResponses.findIndex((res) => res.survey_item_id === result.item_id);
+				const index = existingResponses.findIndex((res) => res.item_id === result.item_id);
 
 				if (index > -1) {
 					return existingResponses.map((res, i) => (i === index ? newResponse : res));

@@ -1,7 +1,7 @@
-import { useQuery } from '@tanstack/react-query';
-import { useCallback, useEffect, useState } from 'react';
 import { useStudy } from '@rssa-project/api';
-import type { PageContent, SurveyItemResponse } from '../../types/rssa.types';
+import { useQuery } from '@tanstack/react-query';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { PageContent, SurveyConstructItem, SurveyItemResponse } from '../../types/rssa.types';
 import ItemBlock from './ItemBlock';
 
 interface ContentBlockProps {
@@ -25,16 +25,22 @@ const ContentBlock: React.FC<ContentBlockProps> = ({ content, onComplete }) => {
 		setAnsweredItemIds((prev) => new Set(prev).add(itemId));
 	}, []);
 
+	const sortedItems = useMemo(() => {
+		if (!content.items) return [];
+		return [...content.items].sort((a, b) => a.order_position - b.order_position);
+	}, [content]);
+
 	useEffect(() => {
 		if (answeredItemIds.size === content.items.length) {
 			onComplete(content.id);
 		}
 	}, [answeredItemIds.size, content, onComplete]);
+
 	return (
 		<div>
-			{content.items.map((item) => {
+			{sortedItems.map((item: SurveyConstructItem) => {
 				const currentResponses = currentPageResponses?.find(
-					(itemRes: SurveyItemResponse) => itemRes.survey_item_id === item.id
+					(itemRes: SurveyItemResponse) => itemRes.item_id === item.id
 				);
 				return (
 					<ItemBlock

@@ -21,9 +21,12 @@ const SurveyPage: React.FC = () => {
 	const { trackEvent } = useTelemetry();
 	const startTime = useRef<number>(0);
 
+	const hasTrackedCompletion = useRef<boolean>(false);
+
 	useEffect(() => {
 		startTime.current = performance.now();
-	}, []);
+		hasTrackedCompletion.current = false;
+	}, [currentPageId]);
 
 	useEffect(() => {
 		if (studyStep.survey_api_root) {
@@ -33,7 +36,7 @@ const SurveyPage: React.FC = () => {
 		}
 	}, [studyStep.survey_api_root, studyStep.root_page_info]);
 
-	const { data: surveyPageWrapper } = useQuery({
+	const { data: surveyPageWrapper, isFetching } = useQuery({
 		queryKey: ['surveyPage', currentPageId],
 		queryFn: () => studyApi.get<NavigationWrapper<SurveyPageType>>(`pages/${currentPageId}`),
 		enabled: !!currentPageId,
@@ -47,21 +50,36 @@ const SurveyPage: React.FC = () => {
 	});
 
 	useEffect(() => {
-		if (isPageComplete) {
+		if (isPageComplete && !hasTrackedCompletion.current && currentPageId) {
 			const durationMs = Math.round(performance.now() - startTime.current);
 			trackEvent('survey_page_completed', {
 				page: currentPageId,
 				duration_ms: durationMs,
 			});
+			hasTrackedCompletion.current = true;
 		}
 	}, [isPageComplete, trackEvent, currentPageId]);
 
 	useEffect(() => {
+		return () => {
+			resetNextButton();
+		};
+	}, [resetNextButton]);
+
+	useEffect(() => {
 		if (!surveyPageWrapper) return;
+		if (isFetching) {
+			setButtonControl({ label: 'Loading...', action: () => {}, isDisabled: true });
+			return;
+		}
+
 		if (surveyPageWrapper.next_id) {
 			setButtonControl({
 				label: 'Continue',
-				action: () => setCurrentPageId(surveyPageWrapper.next_id),
+				action: () => {
+					setButtonControl({ label: 'Loading...', action: () => {}, isDisabled: true });
+					setCurrentPageId(surveyPageWrapper.next_id);
+				},
 				isDisabled: !isPageComplete,
 			});
 		} else {
@@ -72,17 +90,13 @@ const SurveyPage: React.FC = () => {
 				setIsStepComplete(false);
 			}
 		}
-		return () => {
-			resetNextButton();
-		};
-	}, [isPageComplete, setButtonControl, resetNextButton, surveyPageWrapper, setIsStepComplete, trackEvent]);
-
+	}, [isPageComplete, setButtonControl, resetNextButton, surveyPageWrapper, setIsStepComplete, isFetching]);
 	if (!surveyPageWrapper) {
 		return <LoadingScreen loading={true} message="Loading survey page..." />;
 	}
 	return (
 		<div className="w-fit mx-auto px-3">
-			<SurveyTemplate surveyPage={surveyPageWrapper.data} />
+			<SurveyTemplate key={surveyPageWrapper.data.id} surveyPage={surveyPageWrapper.data} />
 		</div>
 	);
 };

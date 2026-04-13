@@ -4,7 +4,7 @@ import { useMutation } from '@tanstack/react-query';
 import { clsx } from 'clsx';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import usePersistentUrlParams from '../hooks/usePersistentUrlParams';
+import { useStudyUrlParams } from '../hooks';
 import { useStepCompletion } from '../hooks/useStepCompletion';
 import type { StudyLayoutContextType } from '../types/study.types';
 
@@ -51,7 +51,9 @@ const ConsentPage: React.FC<ConsentPageProps> = ({
 	const { isStepComplete, setIsStepComplete } = useStepCompletion();
 
 	const studyId = useMemo(() => studyApi.getStudyId(), [studyApi]);
-	const participantParams = usePersistentUrlParams(studyId || '');
+	const participantParams = useStudyUrlParams();
+
+	useEffect(() => {}, [participantParams]);
 
 	if (!studyId) {
 		throw new Error('VITE_STUDY_ID is missing. Please ensure it is set in your environment file.');

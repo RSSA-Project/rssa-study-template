@@ -71,7 +71,7 @@ export const WarningDialog: React.FC<WarningDialogProps> = ({
 								{!disableHide && (
 									<button
 										onClick={confirmCallback ? confirmCallback : handleClose}
-										className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+										className="px-4 py-2 bg-amber-500 text-white rounded hover:bg-amber-600"
 									>
 										{confirmText}
 									</button>

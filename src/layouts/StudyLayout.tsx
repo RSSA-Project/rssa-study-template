@@ -24,6 +24,13 @@ const StudyLayoutContent: React.FC<StudyLayoutProps> = ({ stepApiData }) => {
 	const { isStepComplete, setIsStepComplete } = useStepCompletion();
 	const { setButtonControl, buttonControl } = useNextButtonControl();
 
+	useEffect(() => {
+		if (stepApiData?.id) {
+			startTime.current = performance.now();
+			window.scrollTo({ top: 0, behavior: 'smooth' });
+		}
+	}, [stepApiData?.id]);
+
 	const handleButtonLoaderState = useCallback(
 		(showLoader: boolean) => setButtonLoader(showLoader),
 		[setButtonLoader]
@@ -37,8 +44,10 @@ const StudyLayoutContent: React.FC<StudyLayoutProps> = ({ stepApiData }) => {
 			step: { id: stepApiData.id, name: stepApiData.name },
 			duration_ms: durationMs,
 		});
+
 		navigate(stepApiData.next!);
 		setIsStepComplete(false);
+
 		startTime.current = performance.now();
 	}, [stepApiData, navigate, setIsStepComplete, trackEvent]);
 
@@ -60,13 +69,14 @@ const StudyLayoutContent: React.FC<StudyLayoutProps> = ({ stepApiData }) => {
 	);
 
 	useEffect(() => {
-		setButtonControl({
-			label: 'Next',
-			action: handleNextButtonClick,
-			isDisabled: !isStepComplete,
-		});
-	}, [handleNextButtonClick, isStepComplete, setButtonControl]);
-
+		if (buttonControl.label === 'Next' || buttonControl.label === 'Continue to Next Step') {
+			setButtonControl({
+				label: 'Next',
+				action: handleNextButtonClick,
+				isDisabled: !isStepComplete,
+			});
+		}
+	}, [handleNextButtonClick, isStepComplete, setButtonControl, buttonControl.label]);
 	if (!stepApiData) return <LoadingScreen loading={!stepApiData} message={'Study page is loading'} />;
 
 	return (

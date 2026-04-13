@@ -6,7 +6,8 @@ import { useState, type ReactNode } from 'react';
 
 type PaginatedDataList<T> = {
 	data: T[];
-	count: number;
+	page_count: number;
+	total: number;
 };
 
 interface PaginatedResourceViewerProps<T> {
@@ -61,7 +62,7 @@ const PaginatedResourceViewer = <T extends { id: string }>({
 	};
 
 	const resourceList = data?.data || [];
-	const totalCount = data?.count || 0;
+	const totalCount = data?.total || 0;
 	const totalPages = Math.ceil(totalCount / limit);
 
 	if (isLoading && !data) {
