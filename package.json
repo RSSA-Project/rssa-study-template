@@ -41,7 +41,7 @@
 		"html-react-parser": "^5.2.8"
 	},
 	"peerDependencies": {
-		"@rssa-project/api": "^1.0.7",
+		"@rssa-project/api": "^1.2.2",
 		"@tanstack/react-query": "^5.90.7",
 		"react": "^19.1.1",
 		"react-dom": "^19.1.1",
