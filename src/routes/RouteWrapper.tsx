@@ -1,7 +1,7 @@
 import { TelemetryProvider, useStudy, useStudyConfig, type StudyStepConfig } from '@rssa-project/api';
 import { useIsRestoring, useQueryClient } from '@tanstack/react-query';
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
-import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+import { Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import LoadingScreen from '../components/loadingscreen/LoadingScreen';
 import TestModeConfirmation from '../components/testmode/TestModeConfirmation';
 import TestModeIndicator from '../components/testmode/TestModeIndicator';
@@ -146,6 +146,7 @@ const RouteWrapper: React.FC<RouteWrapperProps> = ({ componentMap, WelcomePage }
 	if (showExitPage) return <StudyExitPage />;
 	if (isRestoring) return <div className="p-8 font-semibold">Restoring session...</div>;
 	if (isLoading || !config) return <LoadingScreen loading={true} message={'Loading Study Configuration...'} />;
+	if (WelcomePage === undefined) return <h1>No landing page defined.</h1>;
 
 	return (
 		<StudyUrlParamsProvider params={contextParams}>
@@ -159,13 +160,10 @@ const RouteWrapper: React.FC<RouteWrapperProps> = ({ componentMap, WelcomePage }
 				{!shouldShowConfirmation && (
 					<Suspense fallback={<div className="p-8">Loading step component...</div>}>
 						<Routes>
-							{WelcomePage && (
-								<Route
-									path="/welcome"
-									element={<WelcomePage isStudyReady={!isLoading} onStudyStart={handleStartStudy} />}
-								/>
-							)}
-							<Route path="/" element={<Navigate to="/welcome" replace />} />
+							<Route
+								path="/"
+								element={<WelcomePage isStudyReady={!isLoading} onStudyStart={handleStartStudy} />}
+							/>
 							<Route element={<StudyLayout stepApiData={currentStepData} />}>{dynamicRoutes}</Route>
 						</Routes>
 					</Suspense>
