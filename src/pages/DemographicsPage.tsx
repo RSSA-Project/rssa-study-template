@@ -1,8 +1,9 @@
-import { Checkbox, Field, Input, Label } from '@headlessui/react';
+import { Field, Label } from '@headlessui/react';
 import { useStudy } from '@rssa-project/api';
 import { useMutation } from '@tanstack/react-query';
-import clsx from 'clsx';
 import { useEffect, useMemo, useState } from 'react';
+import { AutoSaveCheckboxGroup } from '../components/AutoSaveCheckboxGroup';
+import { AutoSaveSelect } from '../components/AutoSaveSelect';
 import Select from '../components/Select';
 import { useStepCompletion } from '../hooks/useStepCompletion';
 import countryList from '../res/country_state.json';
@@ -107,8 +108,6 @@ const DemographicsPage: React.FC<DemographicsPageProps> = ({
 
 	const [education, setEducation] = useState<string | null>(null);
 
-	const [submitButtonDisabled, setSubmitButtonDisabled] = useState<boolean>(true);
-
 	useEffect(() => {
 		if (countryState) setCountry(countryState);
 	}, [countryState]);
@@ -116,6 +115,16 @@ const DemographicsPage: React.FC<DemographicsPageProps> = ({
 	useEffect(() => {
 		if (stateRegionState) setRegion(stateRegionState);
 	}, [stateRegionState]);
+
+	useEffect(() => setRegion(null), [country]);
+
+	const upsertMutation = useMutation({
+		mutationKey: ['Demographics'],
+		mutationFn: async (payload: Partial<Demographic>) => {
+			return studyApi.patch<Partial<Demographic>, Demographic>('participants/demographics', payload);
+		},
+		onError: () => console.error('Failed to auto-save demographics'),
+	});
 
 	useEffect(() => {
 		const isAgeValid = !iAge || !!age;
@@ -136,63 +145,26 @@ const DemographicsPage: React.FC<DemographicsPageProps> = ({
 			isRegionValid &&
 			isUrbanicityValid;
 
-		setSubmitButtonDisabled(!isFormValid);
+		setIsStepComplete(isFormValid);
 	}, [
-		iAge,
 		age,
-		iGender,
 		gender,
 		genderText,
-		iRaceEthnicity,
 		race,
 		raceText,
-		iEducation,
 		education,
-		iCountry,
 		country,
-		iStateRegion,
 		region,
-		iUrbanicity,
 		urbanicity,
+		iAge,
+		iGender,
+		iRaceEthnicity,
+		iEducation,
+		iCountry,
+		iStateRegion,
+		iUrbanicity,
+		setIsStepComplete,
 	]);
-
-	useEffect(() => setRegion(null), [country]);
-
-	const demographicsMutation = useMutation({
-		mutationKey: ['Demographics'],
-		mutationFn: async () => {
-			const payload: Demographic = {};
-
-			if (iAge && age) payload.age_range = age;
-
-			if (iGender && gender) {
-				payload.gender = gender;
-				if (gender === 'Prefer to self-describe') payload.gender_other = genderText;
-			}
-
-			if (iRaceEthnicity && race.size > 0) {
-				payload.race = Array.from(race);
-				if (race.has('Not listed (Please specify)')) payload.race_other = raceText;
-			}
-
-			if (iEducation && education) payload.education = education;
-
-			if (iCountry && country) payload.country = country;
-
-			if (iStateRegion && region) payload.state_region = region;
-
-			if (iUrbanicity && urbanicity) payload.urbanicity = urbanicity;
-
-			return studyApi.post<Demographic, Demographic>('participants/demographics', payload);
-		},
-		onSuccess: () => {
-			setSubmitButtonDisabled(true);
-			setIsStepComplete(true);
-		},
-		onError: () => {
-			console.error('Something went wrong');
-		},
-	});
 
 	const countryStateMap = useMemo(() => {
 		return Array.from(countryList).reduce((countryMap, currentCountry) => {
@@ -204,131 +176,56 @@ const DemographicsPage: React.FC<DemographicsPageProps> = ({
 		}, new Map<string, CountryItems>());
 	}, []);
 
-	const handleRaceSelection = (checked: boolean, raceVal: string) => {
-		const newSelection = new Set(race);
-		if (checked) {
-			newSelection.add(raceVal);
-		} else {
-			newSelection.delete(raceVal);
-		}
-		setRace(newSelection);
-		if (!newSelection.has('Not listed (Please specify)')) {
-			setRaceText('');
-		}
-	};
-
 	return (
-		<div className="mx-auto text-left m-5 p-5 text-md font-normal w-180 shadow-sm">
+		<div className="mx-auto text-left m-5 p-5 text-md font-normal w-180 shadow-sm mb-24">
 			{iAge && (
-				<Field className="mt-5 shadow-sm p-3 rounded">
-					<Label className="">What is your age?</Label>
-					<Select
-						placeholder="Please choose an option"
-						onChange={(ageVal) => {
-							setAge(ageVal as string);
-						}}
-					>
-						{AGE_OPTIONS}
-					</Select>
-				</Field>
+				<AutoSaveSelect
+					label="What is your age?"
+					options={AGE_OPTIONS}
+					onSave={(val) => {
+						setAge(val);
+						upsertMutation.mutate({ age_range: val });
+					}}
+				/>
 			)}
+
 			{iGender && (
-				<Field className="mt-5 shadow-sm p-3 rounded">
-					<Label className="me-5">What is your gender?</Label>
-					<div className="flex items-center">
-						<Select
-							placeholder="Please choose an option"
-							onChange={(genderVal) => {
-								setGender(genderVal as string);
-							}}
-						>
-							{GENDER_OPTIONS}
-						</Select>
-						{gender && gender === 'Prefer to self-describe' && (
-							<Input
-								value={genderText}
-								onChange={(evt) => {
-									const newGender = evt.target.value;
-									setGenderText(newGender);
-									if (newGender !== 'Prefer to self-describe') {
-										setGenderText('');
-									}
-								}}
-								type="text"
-								className={clsx(
-									'rounded-md',
-									'p-3 ms-3',
-									'rounded-md border-amber-400',
-									'shadow-sm focus:border-yellow-500 focus:ring-yellow-500',
-									'sm:text-sm font-mono'
-								)}
-							/>
-						)}
-					</div>
-				</Field>
+				<AutoSaveSelect
+					label="What is your gender?"
+					options={GENDER_OPTIONS}
+					hasOther={true}
+					onSave={(val, text) => {
+						setGender(val);
+						setGenderText(text || '');
+						upsertMutation.mutate({ gender: val, gender_other: text });
+					}}
+				/>
 			)}
+
 			{iRaceEthnicity && (
-				<Field className="mt-5 shadow-sm p-3 rounded">
-					<Label>Which race or ethnicity do you identify with?</Label>
-					{RACE_OPTIONS.map((raceVal, idx) => (
-						<div key={raceVal} className="flex items-center mt-2">
-							<Checkbox
-								id={`raceVal_${idx}`}
-								checked={race.has(raceVal)}
-								onChange={(checked) => handleRaceSelection(checked, raceVal)}
-								className={clsx(
-									'group block me-3 size-5 rounded border border-amber-500',
-									'bg-white cursor-pointer',
-									'shadow-sm focus:border-yellow-500 focus:ring-yellow-500',
-									'data-checked:bg-amber-500 data-disabled:cursor-not-allowed',
-									'data-disabled:opacity-50 data-checked:data-disabled:bg-gray-500'
-								)}
-							>
-								<svg
-									className="stroke-white opacity-0 group-data-checked:opacity-100"
-									viewBox="0 0 14 14"
-									fill="none"
-								>
-									<path
-										d="M3 8L6 11L11 3.5"
-										strokeWidth={2}
-										strokeLinecap="round"
-										strokeLinejoin="round"
-									/>
-								</svg>
-							</Checkbox>
-							<Label htmlFor={`raceVal_${idx}`}>{raceVal}</Label>
-							{raceVal === 'Not listed (Please specify)' && race.has(raceVal) && (
-								<Input
-									value={raceText}
-									onChange={(evt) => setRaceText(evt.target.value)}
-									type="text"
-									className={clsx(
-										'rounded-md',
-										'p-2 ms-3',
-										'rounded-md border-amber-400',
-										'shadow-sm focus:border-yellow-500 focus:ring-yellow-500',
-										'sm:text-sm font-mono'
-									)}
-								/>
-							)}
-						</div>
-					))}
-				</Field>
+				<AutoSaveCheckboxGroup
+					label="Which race or ethnicity do you identify with?"
+					options={RACE_OPTIONS}
+					hasOther={true}
+					onSave={(vals, text) => {
+						setRace(new Set(vals));
+						setRaceText(text || '');
+						upsertMutation.mutate({ race: vals, race_other: text });
+					}}
+				/>
 			)}
+
 			{iEducation && (
-				<Field className="mt-5 shadow-sm p-3 rounded">
-					<Label className="me-5">What is the highest degree or level of education you have completed?</Label>
-					<Select
-						placeholder="Please choose an option"
-						onChange={(edValue) => {
-							setEducation(edValue as string);
-						}}
-					>
-						{EDUCATION_OPTIONS}
-					</Select>
-				</Field>
+				<AutoSaveSelect
+					label="What is the highest degree or level of education you have completed?"
+					options={EDUCATION_OPTIONS}
+					onSave={(val) => {
+						setEducation(val);
+						upsertMutation.mutate({ education: val });
+					}}
+				/>
 			)}
+
 			{(iCountry || iStateRegion) && (
 				<Field className="mt-5 shadow-sm p-3 rounded">
 					<Label className="me-5">Where do you currently reside?</Label>
@@ -336,7 +233,10 @@ const DemographicsPage: React.FC<DemographicsPageProps> = ({
 						{iCountry && (
 							<Select
 								placeholder="Please choose an option"
-								onChange={(countryVal) => setCountry(countryVal as string)}
+								onChange={(val) => {
+									setCountry(val as string);
+									upsertMutation.mutate({ country: val as string });
+								}}
 							>
 								{[...countryStateMap.keys()]}
 							</Select>
@@ -344,8 +244,9 @@ const DemographicsPage: React.FC<DemographicsPageProps> = ({
 						{country && iStateRegion && (
 							<Select
 								placeholder="Please choose an option"
-								onChange={(regionVal) => {
-									setRegion(regionVal as string);
+								onChange={(val) => {
+									setRegion(val as string);
+									upsertMutation.mutate({ state_region: val as string });
 								}}
 							>
 								{countryStateMap.get(country)?.stateProvinces as string[]}
@@ -354,31 +255,17 @@ const DemographicsPage: React.FC<DemographicsPageProps> = ({
 					</div>
 				</Field>
 			)}
+
 			{iUrbanicity && (
-				<Field className="mt-5 shadow-sm p-3 rounded">
-					<Label className="me-5">How would you describe your location?</Label>
-					<Select
-						placeholder="Please choose an option"
-						onChange={(urbanVal) => {
-							setUrbanicity(urbanVal as string);
-						}}
-					>
-						{URBANICITY_OPTIONS}
-					</Select>
-				</Field>
+				<AutoSaveSelect
+					label="How would you describe your location?"
+					options={URBANICITY_OPTIONS}
+					onSave={(val) => {
+						setUrbanicity(val);
+						upsertMutation.mutate({ urbanicity: val });
+					}}
+				/>
 			)}
-			<button
-				className={clsx(
-					'm-5 p-3 rounded-md w-81',
-					submitButtonDisabled
-						? 'cursor-not-allowed bg-gray-400'
-						: 'bg-amber-500 cursor-pointer hover:bg-amber-600'
-				)}
-				disabled={submitButtonDisabled}
-				onClick={() => demographicsMutation.mutateAsync()}
-			>
-				Submit
-			</button>
 		</div>
 	);
 };

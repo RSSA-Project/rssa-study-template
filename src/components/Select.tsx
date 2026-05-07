@@ -49,7 +49,7 @@ const Select = ({
 						<ListboxOptions
 							anchor="bottom"
 							className={clsx(
-								'absolute w-81 !max-h-63',
+								'absolute w-81 max-h-63',
 								'mt-1 overflow-auto rounded-md cursor-pointer',
 								'bg-white text-base shadow-lg ring-1 ring-amber-500',
 								'focus:outline-none sm:text-sm'
