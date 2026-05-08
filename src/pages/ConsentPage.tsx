@@ -99,7 +99,7 @@ const ConsentPage: React.FC<ConsentPageProps> = ({
 	const consentButtonDisabled = !agreed || consentMutation.isPending || isStepComplete;
 
 	return (
-		<div className="container mx-auto p-4">
+		<div className="max-w-300 mx-auto p-4">
 			<div className="bg-white shadow-md rounded-lg p-6 text-left">
 				{itemTitle && <h3 className="text-2xl font-bold mb-4">{itemTitle}</h3>}
 

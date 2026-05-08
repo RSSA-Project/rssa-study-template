@@ -1,20 +1,28 @@
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions, Transition } from '@headlessui/react';
 import { CheckIcon, ChevronDownIcon } from '@heroicons/react/16/solid';
 import clsx from 'clsx';
-import { Fragment, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 
 const Select = ({
 	onChange,
 	children,
 	placeholder = '',
 	className,
+	value,
 }: {
 	onChange: (value: string | boolean | number | null) => void;
 	children: React.ReactNode[];
 	placeholder?: string;
 	className?: string;
+	value?: string | boolean | number | null;
 }) => {
-	const [selected, setSelected] = useState<string | boolean | number | null>(placeholder);
+	const [selected, setSelected] = useState<string | boolean | number | null>(value || placeholder);
+
+	useEffect(() => {
+		if (value != undefined) {
+			setSelected(value || placeholder);
+		}
+	}, [value, placeholder]);
 
 	const handleChange = (value: string | boolean | number | null) => {
 		setSelected(value);
@@ -49,7 +57,7 @@ const Select = ({
 						<ListboxOptions
 							anchor="bottom"
 							className={clsx(
-								'absolute w-81 max-h-63',
+								'absolute w-81 max-h-90',
 								'mt-1 overflow-auto rounded-md cursor-pointer',
 								'bg-white text-base shadow-lg ring-1 ring-amber-500',
 								'focus:outline-none sm:text-sm'

@@ -8,6 +8,7 @@ interface AutoSaveSelectProps {
 	label: string;
 	options: string[];
 	initialValue?: string | null;
+	initialOtherText?: string;
 	hasOther?: boolean;
 	otherLabel?: string;
 	onSave: (val: string, otherText?: string) => void;
@@ -17,13 +18,22 @@ export const AutoSaveSelect: React.FC<AutoSaveSelectProps> = ({
 	label,
 	options,
 	initialValue = null,
+	initialOtherText = '',
 	hasOther = false,
 	otherLabel = 'Prefer to self-describe',
 	onSave,
 }) => {
 	const [val, setVal] = useState<string | null>(initialValue);
-	const [text, setText] = useState('');
+	const [text, setText] = useState(initialOtherText);
 	const debouncedText = useDebounce(text, 500);
+
+	useEffect(() => {
+		if (initialValue !== undefined) setVal(initialValue);
+	}, [initialValue]);
+
+	useEffect(() => {
+		if (initialOtherText !== undefined) setText(initialOtherText);
+	}, [initialOtherText]);
 
 	const handleChange = (newVal: string) => {
 		setVal(newVal);
@@ -39,13 +49,18 @@ export const AutoSaveSelect: React.FC<AutoSaveSelectProps> = ({
 		if (val === otherLabel && debouncedText !== '') {
 			onSave(val, debouncedText);
 		}
-	}, [debouncedText, val, onSave, otherLabel]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [debouncedText]);
 
 	return (
 		<Field className="mt-5 shadow-sm p-3 rounded">
 			<Label className="me-5">{label}</Label>
 			<div className="flex items-center">
-				<Select placeholder="Please choose an option" onChange={(v) => handleChange(v as string)}>
+				<Select
+					placeholder="Please choose an option"
+					value={initialValue}
+					onChange={(v) => handleChange(v as string)}
+				>
 					{options}
 				</Select>
 				{hasOther && val === otherLabel && (

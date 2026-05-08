@@ -36,7 +36,7 @@ const SurveyTemplate: React.FC<SurveyTemplateProps> = ({ surveyPage }) => {
 	return (
 		<>
 			{pageContents.map((pageContent) => (
-				<div key={pageContent.id}>
+				<div key={pageContent.id} className="max-w-300">
 					{pageContent.preamble && <p>{pageContent.preamble}</p>}
 					<ContentBlock content={pageContent} onComplete={handelCompletion} />
 				</div>

@@ -77,10 +77,11 @@ const RouteWrapper: React.FC<RouteWrapperProps> = ({ componentMap, WelcomePage }
 					setCurrentStepData(stepData);
 				} catch (error) {
 					console.error('Failed to load step data:', error);
+					navigate('/');
 				}
 			}
 		},
-		[studyApi, currentStepData]
+		[studyApi, currentStepData, navigate]
 	);
 	useEffect(() => {
 		if (config && config.steps && !isInitializing) {
@@ -158,7 +159,7 @@ const RouteWrapper: React.FC<RouteWrapperProps> = ({ componentMap, WelcomePage }
 					onCancel={handleCancelTestMode}
 				/>
 				{!shouldShowConfirmation && (
-					<Suspense fallback={<div className="p-8">Loading step component...</div>}>
+					<Suspense fallback={<div className="p-8 w-full h-full">Loading step component...</div>}>
 						<Routes>
 							<Route
 								path="/"

@@ -1,8 +1,8 @@
 import { CheckCircleIcon } from '@heroicons/react/16/solid';
+import { useStudy } from '@rssa-project/api';
 import { useQuery } from '@tanstack/react-query';
 import clsx from 'clsx';
 import React, { useEffect, useMemo } from 'react';
-import { useStudy } from '@rssa-project/api';
 import MovieCard from '../components/moviegallery/MovieCard';
 import PaginatedResourceViewer from '../components/PaginatedDataViewer';
 import { useStepCompletion } from '../hooks/useStepCompletion';
@@ -72,28 +72,34 @@ const MovieRatingPage: React.FC<MovieRatingPageProps> = ({ minRatingCount = 10, 
 	}, [ratedCount, minRatingCount, setIsStepComplete]);
 
 	return (
-		<div className="text-gray-900 my-3">
+		<div className="text-gray-900 my-3 max-w-300 min-w-max">
 			<div className="w-fit mx-auto justify-between p-3 bg-gray-300 rounded-3">
 				<PaginatedResourceViewer<MovieDetails> apiResourceTag="movies" limit={itemsPerPage}>
 					{(movies, _, handleItemClick) => (
 						<div className={clsx('grid sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-6 xl:grid-cols-6 gap-3')}>
-							{movies.length > 0 ? (
-								movies.map((movie) => {
-									const ratedMovie = ratedMovies?.find(
-										(rated: RatedItem) => rated.item_id === movie.id
-									);
-									return (
-										<MovieCard
-											key={movie.id}
-											movie={movie}
-											userRating={ratedMovie}
-											onClick={() => handleItemClick(movie)}
-										/>
-									);
-								})
-							) : (
-								<p>No movies found for this page.</p>
-							)}
+							{movies.length > 0
+								? movies.map((movie) => {
+										const ratedMovie = ratedMovies?.find(
+											(rated: RatedItem) => rated.item_id === movie.id
+										);
+										return (
+											<MovieCard
+												key={movie.id}
+												movie={movie}
+												userRating={ratedMovie}
+												onClick={() => handleItemClick(movie)}
+											/>
+										);
+									})
+								: Array.from({ length: itemsPerPage }).map((_, index) => (
+										<div
+											key={`skeleton-${index}`}
+											className="bg-gray-300 dark:bg-gray-800 rounded-lg overflow-hidden shadow-lg flex flex-col animate-pulse"
+										>
+											<div className="relative lg:h-54 xxl:h-81 flex items-center justify-center bg-black"></div>
+											<div className="bg-gray-500 dark:bg-gray-600 h-11 w-full mt-auto"></div>
+										</div>
+									))}
 						</div>
 					)}
 				</PaginatedResourceViewer>

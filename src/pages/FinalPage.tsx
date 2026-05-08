@@ -27,6 +27,7 @@ const FinalPage: React.FC = () => {
 				setTimeLeft((prevTime: number) => {
 					if (prevTime <= 1) {
 						clearInterval(countdownRef.current);
+						if (completionResult.redirect_url) window.location.replace(completionResult.redirect_url);
 						return 0;
 					}
 					return prevTime - 1;
@@ -42,7 +43,7 @@ const FinalPage: React.FC = () => {
 
 	return (
 		<div>
-			<div className="mx-auto mt-7 text-left w-1/2">
+			<div className="mx-auto mt-7 text-left max-w-300">
 				<p className="mt-5">{completionResult?.message}</p>
 				<div className="mt-5">
 					<p>

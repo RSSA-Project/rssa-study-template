@@ -6,6 +6,8 @@ import { useDebounce } from '../hooks/useDebounce';
 interface AutoSaveCheckboxGroupProps {
 	label: string;
 	options: string[];
+	initialValues?: string[];
+	initialOtherText?: string;
 	hasOther?: boolean;
 	otherLabel?: string;
 	onSave: (vals: string[], otherText?: string) => void;
@@ -14,13 +16,26 @@ interface AutoSaveCheckboxGroupProps {
 export const AutoSaveCheckboxGroup: React.FC<AutoSaveCheckboxGroupProps> = ({
 	label,
 	options,
+	initialValues = [],
+	initialOtherText = '',
 	hasOther = false,
 	otherLabel = 'Not listed (Please specify)',
 	onSave,
 }) => {
-	const [selected, setSelected] = useState<Set<string>>(new Set());
-	const [text, setText] = useState('');
+	const [selected, setSelected] = useState<Set<string>>(new Set(initialValues));
+	const [text, setText] = useState(initialOtherText);
 	const debouncedText = useDebounce(text, 500);
+
+	useEffect(() => {
+		if (initialValues.length > 0) {
+			setSelected(new Set(initialValues));
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [JSON.stringify(initialValues)]);
+
+	useEffect(() => {
+		if (initialOtherText) setText(initialOtherText);
+	}, [initialOtherText]);
 
 	const handleToggle = (checked: boolean, opt: string) => {
 		const next = new Set(selected);
@@ -40,7 +55,8 @@ export const AutoSaveCheckboxGroup: React.FC<AutoSaveCheckboxGroupProps> = ({
 		if (selected.has(otherLabel) && debouncedText !== '') {
 			onSave(Array.from(selected), debouncedText);
 		}
-	}, [debouncedText, selected, onSave, otherLabel]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [debouncedText]);
 
 	return (
 		<Field className="mt-5 shadow-sm p-3 rounded">

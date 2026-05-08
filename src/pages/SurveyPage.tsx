@@ -92,7 +92,11 @@ const SurveyPage: React.FC = () => {
 		}
 	}, [isPageComplete, setButtonControl, resetNextButton, surveyPageWrapper, setIsStepComplete, isFetching]);
 	if (!surveyPageWrapper) {
-		return <LoadingScreen loading={true} message="Loading survey page..." />;
+		return (
+			<div className="w-270 h-90 mx-auto px-3">
+				<LoadingScreen loading={true} message="Loading survey page..." />
+			</div>
+		);
 	}
 	return (
 		<div className="w-fit mx-auto px-3">

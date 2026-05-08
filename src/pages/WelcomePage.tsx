@@ -61,7 +61,7 @@ const WelcomePage: React.FC<WelcomePageProps> = ({
 	});
 
 	return (
-		<div className="p-5 m-5">
+		<div className="justify-items-center">
 			<Header title={title} content={subtitle} />
 			<ContinueFormModal
 				isOpen={showCodeForm}

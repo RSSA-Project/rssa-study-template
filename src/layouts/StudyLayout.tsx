@@ -77,10 +77,15 @@ const StudyLayoutContent: React.FC<StudyLayoutProps> = ({ stepApiData }) => {
 			});
 		}
 	}, [handleNextButtonClick, isStepComplete, setButtonControl, buttonControl.label]);
-	if (!stepApiData) return <LoadingScreen loading={!stepApiData} message={'Study page is loading'} />;
+	if (!stepApiData)
+		return (
+			<div className="justify-items-center align-middle min-w-270 min-h-90">
+				<LoadingScreen loading={!stepApiData} message={'Study page is loading'} />
+			</div>
+		);
 
 	return (
-		<div>
+		<div className="justify-items-center">
 			<Header
 				title={stepApiData?.title || stepApiData?.name || 'Step missing title.'}
 				content={
@@ -89,9 +94,9 @@ const StudyLayoutContent: React.FC<StudyLayoutProps> = ({ stepApiData }) => {
 					'Step is missing description or instructions.'
 				}
 			/>
-			<div className="px-2 rounded-md mb-24">
+			<div className="px-2 rounded-md mb-24 max-w-300">
 				<Outlet context={outletContextValue} />
-				<nav className="p-4 bg-gray-200 flex justify-end mt-3">
+				<nav className="p-4 bg-gray-200 flex justify-end mt-3 max-w-300">
 					{stepApiData?.next && (
 						<NextButton
 							handleClick={buttonControl.action}

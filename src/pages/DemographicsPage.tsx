@@ -1,9 +1,10 @@
 import { Field, Label } from '@headlessui/react';
 import { useStudy } from '@rssa-project/api';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { AutoSaveCheckboxGroup } from '../components/AutoSaveCheckboxGroup';
 import { AutoSaveSelect } from '../components/AutoSaveSelect';
+import LoadingScreen from '../components/loadingscreen/LoadingScreen';
 import Select from '../components/Select';
 import { useStepCompletion } from '../hooks/useStepCompletion';
 import countryList from '../res/country_state.json';
@@ -126,6 +127,32 @@ const DemographicsPage: React.FC<DemographicsPageProps> = ({
 		onError: () => console.error('Failed to auto-save demographics'),
 	});
 
+	const { data: existingData, isLoading } = useQuery({
+		queryKey: ['Demographics'],
+		queryFn: () => studyApi.get<Demographic>('participants/demographics'),
+		retry: false,
+		refetchOnWindowFocus: false,
+	});
+
+	useEffect(() => {
+		if (existingData) {
+			if (existingData.age_range) setAge(existingData.age_range);
+			if (existingData.gender) setGender(existingData.gender);
+			if (existingData.gender_other) setGenderText(existingData.gender_other);
+
+			if (existingData.race) {
+				const raceArray = Array.isArray(existingData.race) ? existingData.race : [];
+				setRace(new Set(raceArray));
+			}
+			if (existingData.race_other) setRaceText(existingData.race_other);
+
+			if (existingData.education) setEducation(existingData.education);
+			if (existingData.country) setCountry(existingData.country);
+			if (existingData.state_region) setRegion(existingData.state_region);
+			if (existingData.urbanicity) setUrbanicity(existingData.urbanicity);
+		}
+	}, [existingData]);
+
 	useEffect(() => {
 		const isAgeValid = !iAge || !!age;
 		const isGenderValid = !iGender || (!!gender && (gender !== 'Prefer to self-describe' || !!genderText));
@@ -176,6 +203,10 @@ const DemographicsPage: React.FC<DemographicsPageProps> = ({
 		}, new Map<string, CountryItems>());
 	}, []);
 
+	if (isLoading) {
+		return <LoadingScreen loading={true} message="Loading demographics..." />;
+	}
+
 	return (
 		<div className="mx-auto text-left m-5 p-5 text-md font-normal w-180 shadow-sm mb-24">
 			{iAge && (
@@ -186,6 +217,7 @@ const DemographicsPage: React.FC<DemographicsPageProps> = ({
 						setAge(val);
 						upsertMutation.mutate({ age_range: val });
 					}}
+					initialValue={age}
 				/>
 			)}
 
@@ -194,6 +226,8 @@ const DemographicsPage: React.FC<DemographicsPageProps> = ({
 					label="What is your gender?"
 					options={GENDER_OPTIONS}
 					hasOther={true}
+					initialValue={gender}
+					initialOtherText={genderText}
 					onSave={(val, text) => {
 						setGender(val);
 						setGenderText(text || '');
@@ -207,6 +241,8 @@ const DemographicsPage: React.FC<DemographicsPageProps> = ({
 					label="Which race or ethnicity do you identify with?"
 					options={RACE_OPTIONS}
 					hasOther={true}
+					initialValues={Array.from(race)}
+					initialOtherText={raceText}
 					onSave={(vals, text) => {
 						setRace(new Set(vals));
 						setRaceText(text || '');
@@ -223,6 +259,7 @@ const DemographicsPage: React.FC<DemographicsPageProps> = ({
 						setEducation(val);
 						upsertMutation.mutate({ education: val });
 					}}
+					initialValue={education}
 				/>
 			)}
 
@@ -237,6 +274,7 @@ const DemographicsPage: React.FC<DemographicsPageProps> = ({
 									setCountry(val as string);
 									upsertMutation.mutate({ country: val as string });
 								}}
+								value={country}
 							>
 								{[...countryStateMap.keys()]}
 							</Select>
@@ -248,6 +286,7 @@ const DemographicsPage: React.FC<DemographicsPageProps> = ({
 									setRegion(val as string);
 									upsertMutation.mutate({ state_region: val as string });
 								}}
+								value={region}
 							>
 								{countryStateMap.get(country)?.stateProvinces as string[]}
 							</Select>
@@ -264,6 +303,7 @@ const DemographicsPage: React.FC<DemographicsPageProps> = ({
 						setUrbanicity(val);
 						upsertMutation.mutate({ urbanicity: val });
 					}}
+					initialValue={urbanicity}
 				/>
 			)}
 		</div>
